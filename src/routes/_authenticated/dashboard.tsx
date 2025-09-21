@@ -1,12 +1,36 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/contexts/AuthContext";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
 	component: Dashboard,
 });
 
 function Dashboard() {
-	const { user, publicUser, signOut } = useAuth();
+	const { user, publicUser, signOut, loading } = useAuth();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!loading && !user) navigate({ to: "/login" });
+	}, [user, loading, navigate]);
+
+	const handleSignOut = async () => {
+		try {
+			await signOut();
+			navigate({ to: "/login" });
+		} catch (error) {
+			console.error("Sign out error:", error);
+			navigate({ to: "/login" });
+		}
+	};
+
+	if (loading || !user) {
+		return (
+			<div className="min-h-screen flex items-center justify-center">
+				<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+			</div>
+		);
+	}
 
 	return (
 		<div className="min-h-screen bg-gray-50">
@@ -21,7 +45,7 @@ function Dashboard() {
 								Welcome, {publicUser?.full_name || user?.email}!
 							</span>
 							<button
-								onClick={signOut}
+								onClick={handleSignOut}
 								className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm"
 							>
 								Sign Out
