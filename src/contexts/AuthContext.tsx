@@ -1,14 +1,15 @@
-import React, {
+import type { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import type React from "react";
+import {
 	createContext,
+	useCallback,
 	useContext,
 	useEffect,
-	useState,
-	useCallback,
 	useRef,
+	useState,
 } from "react";
 import { supabase } from "../lib/supabase";
 import type { AuthContextType, AuthState, PublicUser } from "../types/auth";
-import type { Session, AuthChangeEvent } from "@supabase/supabase-js";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 

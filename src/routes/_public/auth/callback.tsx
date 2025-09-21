@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { supabase } from "@/lib/supabase";
 import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 type CallbackSearch = {
 	redirect?: string;
@@ -28,8 +28,8 @@ export const Route = createFileRoute("/_public/auth/callback")({
 
 function AuthCallback() {
 	return (
-		<div className="min-h-screen flex items-center justify-center">
-			<div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+		<div className="flex min-h-screen items-center justify-center">
+			<div className="h-8 w-8 animate-spin rounded-full border-gray-900 border-b-2" />
 		</div>
 	);
 }

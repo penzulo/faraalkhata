@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "@tanstack/react-form";
+import { createFileRoute } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { z } from "zod";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect } from "react";
 
 const loginSchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
@@ -56,10 +56,10 @@ function LoginPage() {
 	}, [error, clearError]);
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-			<div className="max-w-md w-full space-y-8">
+		<div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+			<div className="w-full max-w-md space-y-8">
 				<div>
-					<h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+					<h2 className="mt-6 text-center font-extrabold text-3xl text-gray-900">
 						Sign in to your account
 					</h2>
 				</div>
@@ -86,14 +86,14 @@ function LoginPage() {
 										type="email"
 										autoComplete="email"
 										required
-										className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+										className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
 										placeholder="Email address"
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 										onBlur={field.handleBlur}
 									/>
 									{field.state.meta.errors?.[0] && (
-										<p className="mt-1 text-sm text-red-600">
+										<p className="mt-1 text-red-600 text-sm">
 											{field.state.meta.errors[0].message}
 										</p>
 									)}
@@ -104,7 +104,7 @@ function LoginPage() {
 
 					{error && (
 						<div className="rounded-md bg-red-50 p-4">
-							<div className="text-sm text-red-700">{error}</div>
+							<div className="text-red-700 text-sm">{error}</div>
 						</div>
 					)}
 
@@ -112,10 +112,10 @@ function LoginPage() {
 						<button
 							type="submit"
 							disabled={loading || !form.state.isValid}
-							className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+							className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 font-medium text-sm text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400"
 						>
 							{loading ? (
-								<div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+								<div className="h-4 w-4 animate-spin rounded-full border-white border-b-2" />
 							) : (
 								"Send Magic Link"
 							)}

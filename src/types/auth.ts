@@ -1,4 +1,4 @@
-import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
+import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
 
 export interface PublicUser {
 	id: string;
