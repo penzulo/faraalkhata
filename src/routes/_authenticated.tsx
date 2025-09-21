@@ -1,6 +1,6 @@
 import { createFileRoute, redirect, Outlet } from "@tanstack/react-router";
-import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/_authenticated")({
 	component: AuthenticatedLayout,
