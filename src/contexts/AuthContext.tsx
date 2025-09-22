@@ -116,7 +116,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	);
 
 	const signInWithMagicLink = useCallback(
-		async (email: string, redirectUrl?: string) => {
+		async (email: string, fullName: string, redirectUrl?: string) => {
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -125,6 +125,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 					options: {
 						emailRedirectTo:
 							redirectUrl || `${window.location.origin}/auth/callback`,
+						data: {
+							full_name: fullName,
+						},
 					},
 				});
 
@@ -170,6 +173,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		}
 	}, []);
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Causes Infinite Loops
 	useEffect(() => {
 		let mounted = true;
 
@@ -234,7 +238,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 			mounted = false;
 			subscription.unsubscribe();
 		};
-	}, [handleAuthChange]); // Remove state.user dependency to prevent unnecessary re-subscriptions
+	}, [handleAuthChange]);
 
 	const value: AuthContextType = {
 		...state,
