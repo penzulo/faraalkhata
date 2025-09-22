@@ -10,7 +10,6 @@ import {
 	Plus,
 	Settings,
 	ShoppingCart,
-	User,
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
@@ -312,10 +311,6 @@ function NavContent({
 						<DropdownMenuContent align="start" side="top" className="mb-2 w-56">
 							<DropdownMenuLabel>Account</DropdownMenuLabel>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem disabled>
-								<User className="mr-2 h-4 w-4" />
-								Profile (Coming Soon)
-							</DropdownMenuItem>
 							<DropdownMenuItem disabled>
 								<Settings className="mr-2 h-4 w-4" />
 								Settings (Coming Soon)
