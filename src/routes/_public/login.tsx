@@ -2,10 +2,20 @@ import { useForm } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { z } from "zod";
+import { FormField } from "@/components/auth/FormField";
 import { useAuth } from "@/contexts/AuthContext";
 
 const loginSchema = z.object({
-	email: z.string().email("Please enter a valid email address"),
+	fullName: z
+		.string({ required_error: "Full name is required." })
+		.min(3, { message: "Name must be at least 3 characters long." })
+		.max(50, { message: "Name cannot be more than 50 characters long." })
+		.trim(),
+	email: z
+		.string({ required_error: "Email is required." })
+		.min(1, { message: "Email is required." })
+		.email("Please enter a valid email address")
+		.trim(),
 });
 
 type LoginSearch = {
@@ -25,6 +35,7 @@ function LoginPage() {
 
 	const form = useForm({
 		defaultValues: {
+			fullName: "",
 			email: "",
 		},
 		validators: {
@@ -37,7 +48,7 @@ function LoginPage() {
 						? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
 						: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent("/dashboard")}`;
 
-				await signInWithMagicLink(value.email, redirectUrl);
+				await signInWithMagicLink(value.email, value.fullName, redirectUrl);
 
 				// Show success message - you can replace this with your toast system
 				alert("Magic link sent! Please check your email.");
@@ -73,33 +84,17 @@ function LoginPage() {
 					className="mt-8 space-y-6"
 				>
 					<div>
-						<form.Field
-							name="email"
-							children={(field) => (
-								<div>
-									<label htmlFor="email" className="sr-only">
-										Email address
-									</label>
-									<input
-										id="email"
-										name="email"
-										type="email"
-										autoComplete="email"
-										required
-										className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm"
-										placeholder="Email address"
-										value={field.state.value}
-										onChange={(e) => field.handleChange(e.target.value)}
-										onBlur={field.handleBlur}
-									/>
-									{field.state.meta.errors?.[0] && (
-										<p className="mt-1 text-red-600 text-sm">
-											{field.state.meta.errors[0].message}
-										</p>
-									)}
-								</div>
+						<form.Field name="email">
+							{(field) => (
+								<FormField
+									field={field}
+									label="Email Address"
+									type="email"
+									placeholder="Email Address"
+									required
+								/>
 							)}
-						/>
+						</form.Field>
 					</div>
 
 					{error && (
@@ -126,3 +121,5 @@ function LoginPage() {
 		</div>
 	);
 }
+
+// function EmailField({field}: {field: FieldApi}) {}

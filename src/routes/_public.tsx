@@ -2,7 +2,7 @@ import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_public")({
 	component: PublicLayout,
-	beforeLoad: async ({ context, location }) => {
+	beforeLoad: async () => {
 		// Check if user is already authenticated
 		const {
 			data: { session },

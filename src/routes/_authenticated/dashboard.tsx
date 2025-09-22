@@ -45,6 +45,7 @@ function Dashboard() {
 								Welcome, {publicUser?.full_name || user?.email}!
 							</span>
 							<button
+								type="button"
 								onClick={handleSignOut}
 								className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
 							>

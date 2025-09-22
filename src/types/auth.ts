@@ -14,7 +14,11 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-	signInWithMagicLink: (emial: string, redirectUrl?: string) => Promise<void>;
+	signInWithMagicLink: (
+		email: string,
+		fullName: string,
+		redirectUrl?: string,
+	) => Promise<void>;
 	signOut: () => Promise<void>;
 	clearError: () => void;
 }
