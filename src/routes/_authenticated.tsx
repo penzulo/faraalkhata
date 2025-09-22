@@ -1,4 +1,11 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import {
+	createFileRoute,
+	Outlet,
+	redirect,
+	useNavigate,
+} from "@tanstack/react-router";
+import { useEffect } from "react";
+import { AppLayout } from "@/components/layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
@@ -44,16 +51,32 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-	const { loading, user } = useAuth();
+	const { loading, user, session } = useAuth();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (!loading && (!user || !session)) {
+			navigate({ to: "/login" });
+		}
+	}, [user, session, loading, navigate]);
 
 	// Only show loading if we don't have a user and we're actually loading
-	if (loading && !user) {
+	if (loading || !user || !session) {
 		return (
-			<div className="flex min-h-screen items-center justify-center">
-				<div className="h-8 w-8 animate-spin rounded-full border-gray-900 border-b-2" />
+			<div className="flex min-h-screen items-center justify-center bg-background">
+				<div className="flex flex-col items-center gap-4">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+					<p className="text-muted-foreground text-sm">
+						Loading your workspace...
+					</p>
+				</div>
 			</div>
 		);
 	}
 
-	return <Outlet />;
+	return (
+		<AppLayout>
+			<Outlet />
+		</AppLayout>
+	);
 }

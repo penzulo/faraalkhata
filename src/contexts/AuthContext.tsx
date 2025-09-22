@@ -9,7 +9,12 @@ import {
 	useState,
 } from "react";
 import { supabase } from "../lib/supabase";
-import type { AuthContextType, AuthState, PublicUser } from "../types/auth";
+import type {
+	AuthContextType,
+	AuthState,
+	MagicLinkOptions,
+	PublicUser,
+} from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -116,7 +121,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	);
 
 	const signInWithMagicLink = useCallback(
-		async (email: string, fullName: string, redirectUrl?: string) => {
+		async (email: string, redirectUrl?: string, options?: MagicLinkOptions) => {
 			try {
 				setState((prev) => ({ ...prev, loading: true, error: null }));
 
@@ -125,9 +130,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 					options: {
 						emailRedirectTo:
 							redirectUrl || `${window.location.origin}/auth/callback`,
-						data: {
-							full_name: fullName,
-						},
+						data: options?.data || {},
 					},
 				});
 

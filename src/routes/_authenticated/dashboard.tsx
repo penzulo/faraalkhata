@@ -7,22 +7,12 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 function Dashboard() {
-	const { user, publicUser, signOut, loading } = useAuth();
+	const { user, loading } = useAuth();
 	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (!loading && !user) navigate({ to: "/login" });
 	}, [user, loading, navigate]);
-
-	const handleSignOut = async () => {
-		try {
-			await signOut();
-			navigate({ to: "/login" });
-		} catch (error) {
-			console.error("Sign out error:", error);
-			navigate({ to: "/login" });
-		}
-	};
 
 	if (loading || !user) {
 		return (
@@ -34,28 +24,6 @@ function Dashboard() {
 
 	return (
 		<div className="min-h-screen bg-gray-50">
-			<nav className="bg-white shadow">
-				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-					<div className="flex h-16 justify-between">
-						<div className="flex items-center">
-							<h1 className="font-semibold text-xl">Dashboard</h1>
-						</div>
-						<div className="flex items-center space-x-4">
-							<span className="text-gray-700">
-								Welcome, {publicUser?.full_name || user?.email}!
-							</span>
-							<button
-								type="button"
-								onClick={handleSignOut}
-								className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
-							>
-								Sign Out
-							</button>
-						</div>
-					</div>
-				</div>
-			</nav>
-
 			<main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
 				<div className="px-4 py-6 sm:px-0">
 					<div className="flex h-96 items-center justify-center rounded-lg border-4 border-gray-200 border-dashed">

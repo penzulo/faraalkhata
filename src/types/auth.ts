@@ -13,11 +13,16 @@ export interface AuthState {
 	error: string | null;
 }
 
+export interface MagicLinkOptions {
+	// biome-ignore lint/suspicious/noExplicitAny: Supabase Metadata Type
+	data?: Record<string, any>;
+}
+
 export interface AuthContextType extends AuthState {
 	signInWithMagicLink: (
 		email: string,
-		fullName: string,
 		redirectUrl?: string,
+		options?: MagicLinkOptions,
 	) => Promise<void>;
 	signOut: () => Promise<void>;
 	clearError: () => void;

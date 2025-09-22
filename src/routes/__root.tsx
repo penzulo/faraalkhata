@@ -4,6 +4,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { Toaster } from "sonner";
 import { ErrorComponent } from "@/components/shared/ErrorComponent";
 import { NotFound } from "@/components/shared/NotFound";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -24,9 +25,16 @@ function RootComponent() {
 	return (
 		<AuthProvider>
 			<Outlet />
+			<Toaster
+				position="top-right"
+				richColors
+				closeButton
+				duration={4000}
+				toastOptions={{ style: { fontFamily: "Poppins, sans-serif" } }}
+			/>
 			<TanstackDevtools
 				config={{
-					position: "bottom-left",
+					position: "bottom-right",
 					hideUntilHover: true,
 				}}
 				plugins={[

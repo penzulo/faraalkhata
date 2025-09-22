@@ -1,22 +1,31 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { Loader2, Mail, Sparkles, User } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { toast } from "sonner";
 import { z } from "zod";
-import { FormField } from "@/components/auth/FormField";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+	Card,
+	CardContent,
+	CardDescription,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
 
 const loginSchema = z.object({
-	fullName: z
-		.string({ required_error: "Full name is required." })
-		.min(3, { message: "Name must be at least 3 characters long." })
-		.max(50, { message: "Name cannot be more than 50 characters long." })
-		.trim(),
-	email: z
-		.string({ required_error: "Email is required." })
-		.min(1, { message: "Email is required." })
-		.email("Please enter a valid email address")
-		.trim(),
+	email: z.string().email("Please enter a valid email address"),
+	full_name: z
+		.string()
+		.min(2, "Full name should be of at least 2 characters.")
+		.max(50, "Full name should be of at most 50 characters"),
 });
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 type LoginSearch = {
 	redirect?: string;
@@ -32,94 +41,244 @@ export const Route = createFileRoute("/_public/login")({
 function LoginPage() {
 	const { signInWithMagicLink, loading, error, clearError } = useAuth();
 	const { redirect } = Route.useSearch();
+	const [isSubmitted, setIsSubmitted] = useState(false);
+
+	const fullNameId = useId();
+	const emailId = useId();
 
 	const form = useForm({
 		defaultValues: {
-			fullName: "",
 			email: "",
-		},
-		validators: {
-			onSubmit: loginSchema,
-		},
+			full_name: "",
+		} as LoginFormData,
 		onSubmit: async ({ value }) => {
 			try {
+				setIsSubmitted(true);
+
 				const redirectUrl =
 					redirect && redirect !== "/login"
 						? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
 						: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent("/dashboard")}`;
 
-				await signInWithMagicLink(value.email, value.fullName, redirectUrl);
+				// Pass full_name in user metadata for Supabase
+				await signInWithMagicLink(value.email, redirectUrl, {
+					data: {
+						full_name: value.full_name,
+					},
+				});
 
-				// Show success message - you can replace this with your toast system
-				alert("Magic link sent! Please check your email.");
+				toast.success("Magic link sent!", {
+					description: "Please check your email and click the link to sign in.",
+				});
 			} catch (error) {
 				console.error("Login error:", error);
+				setIsSubmitted(false);
+				toast.error("Failed to send magic link", {
+					description:
+						"Please try again or contact support if the issue persists.",
+				});
 			}
 		},
 	});
 
 	useEffect(() => {
 		if (error) {
-			// Clear error after 5 seconds
 			const timer = setTimeout(clearError, 5000);
 			return () => clearTimeout(timer);
 		}
 	}, [error, clearError]);
 
+	if (isSubmitted) {
+		return (
+			<div className="flex min-h-screen items-center justify-center bg-background p-4">
+				<Card className="w-full max-w-md">
+					<CardContent className="pt-6">
+						<div className="flex flex-col items-center space-y-4 text-center">
+							<div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+								<Mail className="h-8 w-8 text-primary" />
+							</div>
+							<div>
+								<h2 className="font-semibold text-2xl text-foreground">
+									Check your email
+								</h2>
+								<p className="mt-2 text-muted-foreground">
+									We've sent a magic link to{" "}
+									<strong>{form.state.values.email}</strong>
+								</p>
+							</div>
+							<div className="space-y-2 text-muted-foreground text-sm">
+								<p>Click the link in the email to sign in to your account.</p>
+								<p>If you don't see the email, check your spam folder.</p>
+							</div>
+							<Button
+								variant="outline"
+								onClick={() => setIsSubmitted(false)}
+								className="mt-4"
+							>
+								Send another link
+							</Button>
+						</div>
+					</CardContent>
+				</Card>
+			</div>
+		);
+	}
+
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-			<div className="w-full max-w-md space-y-8">
-				<div>
-					<h2 className="mt-6 text-center font-extrabold text-3xl text-gray-900">
-						Sign in to your account
-					</h2>
+		<div className="flex min-h-screen items-center justify-center bg-background p-4">
+			<div className="w-full max-w-md space-y-6">
+				{/* Brand Header */}
+				<div className="space-y-4 text-center">
+					<div className="flex justify-center">
+						<div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-faraal-saffron to-faraal-gold shadow-lg">
+							<Sparkles className="h-8 w-8 text-white" />
+						</div>
+					</div>
+					<div>
+						<h1 className="font-semibold text-3xl text-foreground">
+							Welcome to FaraalKhata
+						</h1>
+						<p className="mt-2 text-muted-foreground">
+							Your festive commerce companion
+						</p>
+					</div>
 				</div>
 
-				<form
-					onSubmit={(e) => {
-						e.preventDefault();
-						e.stopPropagation();
-						form.handleSubmit();
-					}}
-					className="mt-8 space-y-6"
-				>
-					<div>
-						<form.Field name="email">
-							{(field) => (
-								<FormField
-									field={field}
-									label="Email Address"
-									type="email"
-									placeholder="Email Address"
-									required
-								/>
-							)}
-						</form.Field>
-					</div>
-
-					{error && (
-						<div className="rounded-md bg-red-50 p-4">
-							<div className="text-red-700 text-sm">{error}</div>
-						</div>
-					)}
-
-					<div>
-						<button
-							type="submit"
-							disabled={loading || !form.state.isValid}
-							className="group relative flex w-full justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 font-medium text-sm text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400"
+				{/* Login Card */}
+				<Card>
+					<CardHeader>
+						<CardTitle>Sign in to your account</CardTitle>
+						<CardDescription>
+							Enter your details to receive a magic link via email
+						</CardDescription>
+					</CardHeader>
+					<CardContent>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+								e.stopPropagation();
+								form.handleSubmit();
+							}}
+							className="space-y-4"
 						>
-							{loading ? (
-								<div className="h-4 w-4 animate-spin rounded-full border-white border-b-2" />
-							) : (
-								"Send Magic Link"
+							{/* Full Name Field */}
+							<form.Field
+								name="full_name"
+								validators={{
+									onChange: z
+										.string()
+										.min(2, "Full name should be of at least 2 characters")
+										.max(50, "Full name should be of at most 50 characters"),
+								}}
+							>
+								{(field) => (
+									<div className="space-y-2">
+										<Label htmlFor={fullNameId}>Full Name</Label>
+										<div className="relative">
+											<User className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
+											<Input
+												id={fullNameId}
+												name="full_name"
+												type="text"
+												placeholder="Enter your full name"
+												className="pl-10"
+												value={field.state.value}
+												onChange={(e) => field.handleChange(e.target.value)}
+												onBlur={field.handleBlur}
+												disabled={loading}
+											/>
+										</div>
+										{field.state.meta.errors?.[0] && (
+											<p className="text-destructive text-sm">
+												{field.state.meta.errors[0].message}
+											</p>
+										)}
+									</div>
+								)}
+							</form.Field>
+
+							{/* Email Field */}
+							<form.Field
+								name="email"
+								validators={{
+									onChange: z
+										.string()
+										.email("Please enter a valid email address"),
+								}}
+							>
+								{(field) => (
+									<div className="space-y-2">
+										<Label htmlFor={emailId}>Email Address</Label>
+										<div className="relative">
+											<Mail className="absolute top-3 left-3 h-4 w-4 text-muted-foreground" />
+											<Input
+												id={emailId}
+												name="email"
+												type="email"
+												placeholder="Enter your email address"
+												className="pl-10"
+												value={field.state.value}
+												onChange={(e) => field.handleChange(e.target.value)}
+												onBlur={field.handleBlur}
+												disabled={loading}
+											/>
+										</div>
+										{field.state.meta.errors?.[0] && (
+											<p className="text-destructive text-sm">
+												{field.state.meta.errors[0].message}
+											</p>
+										)}
+									</div>
+								)}
+							</form.Field>
+
+							{/* Error Alert */}
+							{error && (
+								<Alert variant="destructive">
+									<AlertDescription>{error}</AlertDescription>
+								</Alert>
 							)}
-						</button>
-					</div>
-				</form>
+
+							{/* Submit Button */}
+							<Button
+								type="submit"
+								className="w-full"
+								disabled={loading || !form.state.isValid}
+							>
+								{loading ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Sending Login Link...
+									</>
+								) : (
+									<>
+										<Mail className="mr-2 h-4 w-4" />
+										Send Login Link
+									</>
+								)}
+							</Button>
+						</form>
+
+						{/* Help Text */}
+						<div className="mt-4 text-center">
+							<p className="text-muted-foreground text-xs">
+								By signing in, you agree to our terms of service and privacy
+								policy.
+								<br />
+								Login links are valid for 24 hours.
+							</p>
+						</div>
+					</CardContent>
+				</Card>
+
+				{/* Footer */}
+				<div className="text-center text-muted-foreground text-sm">
+					<p>
+						New to FaraalKhata? Your account will be created automatically when
+						you click the login link.
+					</p>
+				</div>
 			</div>
 		</div>
 	);
 }
-
-// function EmailField({field}: {field: FieldApi}) {}
