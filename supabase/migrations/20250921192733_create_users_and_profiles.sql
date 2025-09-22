@@ -3,6 +3,7 @@ CREATE TABLE public."User" (
   id UUID REFERENCES auth.users NOT NULL PRIMARY KEY, 
   full_name TEXT
 );
+COMMENT ON TABLE public."User" IS 'Users who are using the  application.';
 
 -- Function to create a public user profile upon new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
