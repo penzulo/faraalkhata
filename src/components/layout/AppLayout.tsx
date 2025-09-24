@@ -10,11 +10,12 @@ import {
 	Plus,
 	Settings,
 	ShoppingCart,
+	Sparkles,
+	User,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
 import { toast } from "sonner";
-import { useLocalStorage } from "usehooks-ts";
+import { useBoolean, useLocalStorage, useMediaQuery } from "usehooks-ts";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -72,8 +73,7 @@ const navigationItems = [
 	},
 ];
 
-function NavContent({
-	onLinkClick,
+function DesktopNavContent({
 	collapsed = false,
 	onToggleCollapse,
 }: NavContentProps) {
@@ -84,7 +84,7 @@ function NavContent({
 	const handleSignOut = async () => {
 		try {
 			await signOut();
-			toast.success("Signed out successfully");
+			toast.success("Signed out successfully.");
 			navigate({ to: "/login" });
 		} catch (error) {
 			console.error("Sign out error:", error);
@@ -97,7 +97,7 @@ function NavContent({
 
 	return (
 		<div className="flex h-full flex-col">
-			{/* Logo & Brand */}
+			{/* Logo & Brand with Toggle */}
 			<div
 				className={cn(
 					"flex items-center border-border border-b transition-all duration-300",
@@ -119,7 +119,7 @@ function NavContent({
 						</div>
 					)}
 				</div>
-				{/* Pin/Unpin Toggle Button */}
+
 				{onToggleCollapse && (
 					<Tooltip delayDuration={300}>
 						<TooltipTrigger asChild>
@@ -127,10 +127,7 @@ function NavContent({
 								variant="ghost"
 								size="sm"
 								onClick={onToggleCollapse}
-								className={cn(
-									"hover:bg:muted h-8 w-8 shrink-0 p-0",
-									collapsed ? "mt-0" : "",
-								)}
+								className="h-8 w-8 shrink-0 p-0 hover:bg-muted"
 							>
 								{collapsed ? (
 									<Pin className="h-4 w-4" />
@@ -140,10 +137,10 @@ function NavContent({
 							</Button>
 						</TooltipTrigger>
 						<TooltipContent>
-							{collapsed ? "Expand Menu" : "Collapse Menu"}
+							{collapsed ? "Pin sidebar open" : "Unpin sidebar"}
 						</TooltipContent>
 					</Tooltip>
-				)}{" "}
+				)}
 			</div>
 
 			{/* Navigation */}
@@ -170,7 +167,6 @@ function NavContent({
 										? "bg-accent text-accent-foreground hover:bg-accent/80"
 										: "text-muted-foreground hover:bg-muted hover:text-foreground",
 							)}
-							onClick={onLinkClick}
 						>
 							<Icon
 								className={cn(
@@ -198,7 +194,6 @@ function NavContent({
 						</Link>
 					);
 
-					// Wrap with tooltip when collapsed
 					if (collapsed) {
 						return (
 							<Tooltip key={item.href} delayDuration={300}>
@@ -225,18 +220,16 @@ function NavContent({
 				)}
 			>
 				{collapsed ? (
-					// Collapsed state with tooltip
 					<Tooltip delayDuration={300}>
 						<TooltipTrigger asChild>
 							<DropdownMenu>
 								<DropdownMenuTrigger asChild>
 									<Button
 										variant="ghost"
-										className="mx-auto block h-12 w-12 rounded-full p-0 hover:bg-muted"
-										// className="h-auto w-full justify-center p-3 hover:bg-muted"
+										className="h-auto w-full justify-center p-3 hover:bg-muted"
 									>
-										<div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary">
-											<span className="font-medium text-primary-foreground text-xs">
+										<div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+											<span className="font-medium text-[10px] text-primary-foreground">
 												{publicUser?.full_name?.[0] || user?.email?.[0] || "U"}
 											</span>
 										</div>
@@ -283,7 +276,6 @@ function NavContent({
 						</TooltipContent>
 					</Tooltip>
 				) : (
-					// Expanded state
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
@@ -312,6 +304,10 @@ function NavContent({
 							<DropdownMenuLabel>Account</DropdownMenuLabel>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem disabled>
+								<User className="mr-2 h-4 w-4" />
+								Profile (Coming Soon)
+							</DropdownMenuItem>
+							<DropdownMenuItem disabled>
 								<Settings className="mr-2 h-4 w-4" />
 								Settings (Coming Soon)
 							</DropdownMenuItem>
@@ -331,17 +327,163 @@ function NavContent({
 	);
 }
 
+function MobileNavContent({ onLinkClick }: NavContentProps) {
+	const { user, publicUser, signOut } = useAuth();
+	const navigate = useNavigate();
+	const location = useLocation();
+
+	const handleSignOut = async () => {
+		try {
+			await signOut();
+			toast.success("Signed out successfully");
+			navigate({ to: "/login" });
+		} catch (error) {
+			console.error("Sign out error:", error);
+			toast.error("Error signing out");
+			navigate({ to: "/login" });
+		}
+	};
+
+	const isCurrentPath = (path: string) => location.pathname === path;
+
+	return (
+		<div className="flex h-full flex-col">
+			{/* Mobile Logo & Brand */}
+			<div className="border-border border-b p-6">
+				<div className="flex items-center gap-3">
+					<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-faraal-saffron to-faraal-gold">
+						<Sparkles className="h-5 w-5 text-white" />
+					</div>
+					<div>
+						<h1 className="font-semibold text-foreground text-lg">
+							FaraalKhata
+						</h1>
+						<p className="text-muted-foreground text-xs">Festive Commerce</p>
+					</div>
+				</div>
+			</div>
+
+			{/* Mobile Navigation */}
+			<nav className="flex-1 space-y-2 p-4">
+				{navigationItems.map((item) => {
+					const Icon = item.icon;
+					const isCurrent = isCurrentPath(item.href);
+
+					return (
+						<Link
+							key={item.href}
+							to={item.href}
+							className={cn(
+								"group flex items-center gap-3 rounded-lg px-4 py-3 transition-all duration-200",
+								isCurrent
+									? "bg-primary text-primary-foreground shadow-sm"
+									: item.isAction
+										? "bg-accent text-accent-foreground hover:bg-accent/80"
+										: "text-muted-foreground hover:bg-muted hover:text-foreground",
+							)}
+							onClick={onLinkClick}
+						>
+							<Icon
+								className={cn(
+									"shrink-0 transition-transform group-hover:scale-110",
+									item.isAction ? "h-4 w-4" : "h-5 w-5",
+								)}
+							/>
+							<div className="flex-1">
+								<div className="font-medium text-sm">{item.name}</div>
+								<div
+									className={cn(
+										"text-xs opacity-75",
+										isCurrent
+											? "text-primary-foreground/75"
+											: "text-muted-foreground",
+									)}
+								>
+									{item.description}
+								</div>
+							</div>
+						</Link>
+					);
+				})}
+			</nav>
+
+			{/* Mobile User Info & Sign Out */}
+			<div className="border-border border-t p-4">
+				<div className="mb-3 flex items-center gap-3 rounded-lg bg-muted/50 p-3">
+					<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary">
+						<span className="font-medium text-primary-foreground text-sm">
+							{publicUser?.full_name?.[0] || user?.email?.[0] || "U"}
+						</span>
+					</div>
+					<div className="min-w-0 flex-1">
+						<p className="truncate font-medium text-foreground text-sm">
+							{publicUser?.full_name || "User"}
+						</p>
+						<p className="truncate text-muted-foreground text-xs">
+							{user?.email}
+						</p>
+					</div>
+				</div>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="w-full justify-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+					onClick={handleSignOut}
+				>
+					<LogOut className="mr-2 h-4 w-4" />
+					Sign Out
+				</Button>
+			</div>
+		</div>
+	);
+}
+
+function MobileBottomNavigation() {
+	const location = useLocation();
+
+	return (
+		<div className="fixed right-0 bottom-0 left-0 z-50 border-border border-t bg-card">
+			<nav className="flex items-center justify-around py-2">
+				{navigationItems.map((item) => {
+					const Icon = item.icon;
+					const isCurrent = location.pathname === item.href;
+
+					return (
+						<Link
+							key={item.href}
+							to={item.href}
+							className={cn(
+								"flex flex-col items-center gap-1 rounded-lg p-2 transition-colors",
+								isCurrent
+									? "text-primary"
+									: item.isAction
+										? "text-accent-foreground"
+										: "text-muted-foreground",
+							)}
+						>
+							<Icon className={cn("h-5 w-5", item.isAction && "h-4 w-4")} />
+							<span className="font-medium text-xs">{item.name}</span>
+						</Link>
+					);
+				})}
+			</nav>
+		</div>
+	);
+}
+
 export function AppLayout({ children }: AppLayoutProps) {
-	const [sidebarOpen, setSidebarOpen] = useState(false);
+	const {
+		value: sidebarOpen,
+		setValue: setSidebarOpen,
+		setFalse: closeSidebar,
+	} = useBoolean();
+
 	const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage(
 		"faraal-sidebar-collapsed",
 		false,
 	);
-	const location = useLocation();
-
-	const handleLinkClick = () => {
-		setSidebarOpen(false);
-	};
+	const isDesktop = useMediaQuery("(min-width: 768px)");
+	const isMobile = useMediaQuery("(max-width: 767px)");
 
 	const toggleSidebar = () => {
 		setSidebarCollapsed(!sidebarCollapsed);
@@ -350,81 +492,69 @@ export function AppLayout({ children }: AppLayoutProps) {
 	return (
 		<TooltipProvider>
 			<div className="min-h-screen bg-background">
-				{/* Desktop Sidebar */}
-				<div
-					className={cn(
-						"z-30 hidden transition-all duration-300 md:fixed md:inset-y-0 md:left-0 md:block",
-						sidebarCollapsed ? "md:w-16" : "md:w-64",
-					)}
-				>
-					<div className="flex h-full flex-col border-border border-r bg-card">
-						<NavContent
-							collapsed={sidebarCollapsed}
-							onToggleCollapse={toggleSidebar}
-						/>
-					</div>
-				</div>
-
-				{/* Mobile Header */}
-				<div className="sticky top-0 z-40 border-border border-b bg-background/95 backdrop-blur md:hidden">
-					<div className="flex items-center justify-between p-4">
-						<div className="flex items-center gap-3">
-							<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-faraal-saffron to-faraal-gold">
-								<span className="font-bold text-sm text-white">F</span>
+				{/* Conditional Desktop Layout */}
+				{isDesktop && (
+					<>
+						{/* Desktop Sidebar */}
+						<div
+							className={cn(
+								"fixed inset-y-0 left-0 z-30 block transition-all duration-300",
+								sidebarCollapsed ? "w-16" : "w-64",
+							)}
+						>
+							<div className="flex h-full flex-col border-border border-r bg-card">
+								<DesktopNavContent
+									collapsed={sidebarCollapsed}
+									onToggleCollapse={toggleSidebar}
+								/>
 							</div>
-							<h1 className="font-semibold text-lg">FaraalKhata</h1>
 						</div>
 
-						<Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-							<SheetTrigger asChild>
-								<Button variant="ghost" size="sm">
-									<Menu className="h-5 w-5" />
-								</Button>
-							</SheetTrigger>
-							<SheetContent side="right" className="w-64 p-0">
-								<NavContent onLinkClick={handleLinkClick} />
-							</SheetContent>
-						</Sheet>
-					</div>
-				</div>
+						{/* Desktop Main Content */}
+						<div
+							className={cn(
+								"transition-all duration-300",
+								sidebarCollapsed ? "pl-16" : "pl-64",
+							)}
+						>
+							<main className="min-h-screen">{children}</main>
+						</div>
+					</>
+				)}
 
-				{/* Main Content */}
-				<div
-					className={cn(
-						"transition-all duration-300",
-						sidebarCollapsed ? "md:pl-16" : "md:pl-64",
-					)}
-				>
-					<main className="min-h-screen">{children}</main>
-				</div>
+				{/* Conditional Mobile Layout */}
+				{isMobile && (
+					<>
+						{/* Mobile Header */}
+						<div className="sticky top-0 z-40 border-border border-b bg-background/95 backdrop-blur">
+							<div className="flex items-center justify-between p-4">
+								<div className="flex items-center gap-3">
+									<div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-faraal-saffron to-faraal-gold">
+										<span className="font-bold text-sm text-white">F</span>
+									</div>
+									<h1 className="font-semibold text-lg">FaraalKhata</h1>
+								</div>
 
-				{/* Mobile Bottom Navigation */}
-				<div className="fixed right-0 bottom-0 left-0 z-50 border-border border-t bg-card md:hidden">
-					<nav className="flex items-center justify-around py-2">
-						{navigationItems.map((item) => {
-							const Icon = item.icon;
-							const isCurrent = location.pathname === item.href;
+								<Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+									<SheetTrigger asChild>
+										<Button variant="ghost" size="sm">
+											<Menu className="h-5 w-5" />
+										</Button>
+									</SheetTrigger>
+									<SheetContent side="right" className="w-64 p-0">
+										<MobileNavContent onLinkClick={closeSidebar} />
+									</SheetContent>
+								</Sheet>
+							</div>
+						</div>
 
-							return (
-								<Link
-									key={item.href}
-									to={item.href}
-									className={cn(
-										"flex flex-col items-center gap-1 rounded-lg p-2 transition-colors",
-										isCurrent
-											? "text-primary"
-											: item.isAction
-												? "text-accent-foreground"
-												: "text-muted-foreground",
-									)}
-								>
-									<Icon className={cn("h-5 w-5", item.isAction && "h-4 w-4")} />
-									<span className="font-medium text-xs">{item.name}</span>
-								</Link>
-							);
-						})}
-					</nav>
-				</div>
+						{/* Mobile Main Content */}
+						<main className="min-h-screen pb-16">{children}</main>
+
+						{/* Mobile Bottom Navigation */}
+						<MobileBottomNavigation />
+					</>
+				)}
 			</div>
 		</TooltipProvider>
 	);
