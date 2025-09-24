@@ -1,5 +1,6 @@
 import { AlertCircle, Package, Plus } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
+import { useBoolean } from "usehooks-ts";
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductForm } from "@/components/products/ProductForm";
 import { Button } from "@/components/ui/button";
@@ -10,20 +11,37 @@ import type { ProductWithCurrentPrice } from "@/types/product";
 
 export function ProductsPage() {
 	const { data: products, isLoading, error } = useProducts();
-	const [showForm, setShowForm] = useState(false);
+
+	// Clean state management with useBoolean
+	const {
+		value: showForm,
+		setTrue: openForm,
+		setFalse: closeForm,
+	} = useBoolean();
+
 	const [editProduct, setEditProduct] =
 		useState<ProductWithCurrentPrice | null>(null);
 
-	const handleEdit = (product: ProductWithCurrentPrice) => {
-		setEditProduct(product);
-		setShowForm(true);
-	};
+	// Optimized event handlers
+	const handleEdit = useCallback(
+		(product: ProductWithCurrentPrice) => {
+			setEditProduct(product);
+			openForm();
+		},
+		[openForm],
+	);
 
-	const handleCloseForm = () => {
-		setShowForm(false);
+	const handleCloseForm = useCallback(() => {
+		closeForm();
 		setEditProduct(null);
-	};
+	}, [closeForm]);
 
+	const handleAddNew = useCallback(() => {
+		setEditProduct(null);
+		openForm();
+	}, [openForm]);
+
+	// Loading state
 	if (isLoading) {
 		return (
 			<div className="min-h-screen bg-background pb-20 md:pb-8">
@@ -36,8 +54,8 @@ export function ProductsPage() {
 
 					{/* Product Cards Skeleton */}
 					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-						{Array.from({ length: 6 }).map((_) => (
-							<Card key={crypto.randomUUID()}>
+						{Array.from({ length: 6 }, (_, k) => (
+							<Card key={k}>
 								<CardContent className="p-4">
 									<div className="flex items-start justify-between">
 										<div className="flex flex-1 items-start gap-3">
@@ -59,6 +77,7 @@ export function ProductsPage() {
 		);
 	}
 
+	// Error state
 	if (error) {
 		return (
 			<div className="min-h-screen bg-background pb-20 md:pb-8">
@@ -92,6 +111,12 @@ export function ProductsPage() {
 					</h1>
 					<p className="text-muted-foreground">
 						Manage your faraal products, pricing, and inventory
+						{products && (
+							<span className="ml-2 font-medium text-sm">
+								({products.length}{" "}
+								{products.length === 1 ? "product" : "products"})
+							</span>
+						)}
 					</p>
 				</div>
 
@@ -108,7 +133,7 @@ export function ProductsPage() {
 							Start building your product catalog by adding your first faraal
 							item
 						</p>
-						<Button onClick={() => setShowForm(true)} className="gap-2">
+						<Button onClick={handleAddNew} className="gap-2">
 							<Plus className="h-4 w-4" />
 							Add Your First Product
 						</Button>
@@ -131,8 +156,8 @@ export function ProductsPage() {
 				{/* Floating Action Button */}
 				{!isEmpty && (
 					<Button
-						onClick={() => setShowForm(true)}
-						className="fixed right-6 bottom-20 z-40 h-14 w-14 rounded-full shadow-lg transition-shadow hover:shadow-xl md:right-8 md:bottom-8"
+						onClick={handleAddNew}
+						className="fixed right-6 bottom-20 z-40 h-14 w-14 rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl active:scale-95 md:right-8 md:bottom-8"
 						size="icon"
 					>
 						<Plus className="h-6 w-6" />

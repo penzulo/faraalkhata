@@ -1,5 +1,6 @@
 import { Edit, MoreHorizontal, Package, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useBoolean } from "usehooks-ts";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -27,30 +28,56 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, onEdit }: ProductCardProps) {
-	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const {
+		value: showDeleteDialog,
+		setTrue: openDeleteDialog,
+		setFalse: closeDeleteDialog,
+	} = useBoolean();
 	const deleteProduct = useDeleteProduct();
 
-	const handleDelete = () => {
-		deleteProduct.mutate(product.id);
-		setShowDeleteDialog(false);
-	};
-
-	const formatCurrency = (amount: number) => {
+	const formatCurrency = useCallback((amount: number) => {
 		return `₹${amount.toFixed(2)}`;
-	};
+	}, []);
 
-	// Calculate profit margin
-	const profitMargin = product.current_cost_price
-		? ((product.sell_price - product.current_cost_price) / product.sell_price) *
-			100
-		: 0;
+	const profitData = useMemo(() => {
+		const margin = product.current_cost_price
+			? ((product.sell_price - product.current_cost_price) /
+					product.sell_price) *
+				100
+			: 0;
 
-	const profitColor =
-		profitMargin >= 30
-			? "text-green-600"
-			: profitMargin >= 20
-				? "text-yellow-600"
-				: "text-red-600";
+		const color =
+			margin >= 30
+				? "text-green-600"
+				: margin >= 20
+					? "text-yellow-600"
+					: "text-red-600";
+
+		const profit = product.current_cost_price
+			? product.sell_price - product.current_cost_price
+			: 0;
+
+		return { margin, color, profit };
+	}, [product.sell_price, product.current_cost_price]);
+
+	const formattedPrices = useMemo(
+		() => ({
+			sell: formatCurrency(product.sell_price),
+			cost: product.current_cost_price
+				? formatCurrency(product.current_cost_price)
+				: "N/A",
+		}),
+		[product.sell_price, product.current_cost_price, formatCurrency],
+	);
+
+	const handleEdit = useCallback(() => {
+		onEdit(product);
+	}, [onEdit, product]);
+
+	const handleDelete = useCallback(() => {
+		deleteProduct.mutateAsync(product.id);
+		closeDeleteDialog();
+	}, [deleteProduct, product.id, closeDeleteDialog]);
 
 	return (
 		<>
@@ -75,7 +102,7 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
 										<span className="text-muted-foreground">
 											Sell:{" "}
 											<span className="font-medium text-foreground">
-												{formatCurrency(product.sell_price)}
+												{formattedPrices.sell}
 											</span>
 										</span>
 									</div>
@@ -86,8 +113,8 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
 										{product.current_cost_price && (
 											<>
 												<span>•</span>
-												<span className={profitColor}>
-													{profitMargin.toFixed(1)}% margin
+												<span className={profitData.color}>
+													{profitData.margin.toFixed(1)}% margin
 												</span>
 											</>
 										)}
@@ -108,15 +135,12 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
 								</Button>
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end" className="w-40">
-								<DropdownMenuItem
-									onClick={() => onEdit(product)}
-									className="text-sm"
-								>
+								<DropdownMenuItem onClick={handleEdit} className="text-sm">
 									<Edit className="mr-2 h-4 w-4" />
 									Edit
 								</DropdownMenuItem>
 								<DropdownMenuItem
-									onClick={() => setShowDeleteDialog(true)}
+									onClick={openDeleteDialog}
 									className="text-destructive text-sm focus:bg-destructive/10 focus:text-destructive"
 								>
 									<Trash2 className="mr-2 h-4 w-4" />
@@ -129,7 +153,7 @@ export function ProductCard({ product, onEdit }: ProductCardProps) {
 			</Card>
 
 			{/* Delete Confirmation Dialog */}
-			<AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+			<AlertDialog open={showDeleteDialog} onOpenChange={closeDeleteDialog}>
 				<AlertDialogContent>
 					<AlertDialogHeader>
 						<AlertDialogTitle>Delete Product</AlertDialogTitle>
