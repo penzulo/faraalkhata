@@ -12,8 +12,9 @@ import {
 	ShoppingCart,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
+import { useLocalStorage } from "usehooks-ts";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -93,7 +94,6 @@ function NavContent({
 	};
 
 	const isCurrentPath = (path: string) => location.pathname === path;
-	// const showContent = !collapsed || isHovered;
 
 	return (
 		<div className="flex h-full flex-col">
@@ -333,24 +333,11 @@ function NavContent({
 
 export function AppLayout({ children }: AppLayoutProps) {
 	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+	const [sidebarCollapsed, setSidebarCollapsed] = useLocalStorage(
+		"faraal-sidebar-collapsed",
+		false,
+	);
 	const location = useLocation();
-
-	// Load sidebar state from localStorage
-	useEffect(() => {
-		const saved = localStorage.getItem("faraal-sidebar-collapsed");
-		if (saved) {
-			setSidebarCollapsed(JSON.parse(saved));
-		}
-	}, []);
-
-	// Save sidebar state to localStorage
-	useEffect(() => {
-		localStorage.setItem(
-			"faraal-sidebar-collapsed",
-			JSON.stringify(sidebarCollapsed),
-		);
-	}, [sidebarCollapsed]);
 
 	const handleLinkClick = () => {
 		setSidebarOpen(false);
@@ -412,7 +399,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 				</div>
 
 				{/* Mobile Bottom Navigation */}
-				<div className="fixed right-0 bottom-0 left-0 border-border border-t bg-card md:hidden">
+				<div className="fixed right-0 bottom-0 left-0 z-50 border-border border-t bg-card md:hidden">
 					<nav className="flex items-center justify-around py-2">
 						{navigationItems.map((item) => {
 							const Icon = item.icon;
