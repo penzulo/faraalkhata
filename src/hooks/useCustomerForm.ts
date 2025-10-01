@@ -269,7 +269,7 @@ export function useCustomerForm({
 				addCategory(categoryId);
 			}
 		},
-		[addCategory, removeCategory],
+		[addCategory, removeCategory, form.getFieldValue],
 	);
 
 	return {

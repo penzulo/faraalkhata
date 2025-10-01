@@ -55,6 +55,7 @@ export function ProductsPage() {
 					{/* Product Cards Skeleton */}
 					<div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
 						{Array.from({ length: 6 }, (_, k) => (
+							// biome-ignore lint/suspicious/noArrayIndexKey: Cached product list won't change that frequently.
 							<Card key={k}>
 								<CardContent className="p-4">
 									<div className="flex items-start justify-between">
