@@ -72,7 +72,7 @@ export interface CustomerSearchResult {
 	matches: Array<{ indices: [number, number][]; value: string; key: string }>;
 }
 
-export interface CustomerFormData {
+export interface CategoryFormData {
 	name: string;
 }
 

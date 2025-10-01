@@ -12,6 +12,7 @@ import {
 	ShoppingCart,
 	Sparkles,
 	User,
+	Users,
 } from "lucide-react";
 import type React from "react";
 import { toast } from "sonner";
@@ -70,6 +71,12 @@ const navigationItems = [
 		href: "/products",
 		icon: Package,
 		description: "Product Catalog",
+	},
+	{
+		name: "Customers",
+		href: "/customers",
+		icon: Users,
+		description: "Manage Customers",
 	},
 ];
 
