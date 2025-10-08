@@ -34,6 +34,12 @@ code {
 	--faraal-medium-gray: 210 6% 46%; /* #717680 */
 	--faraal-dark-gray: 210 9% 31%; /* #464C56 */
 
+	/* Order Tracking Color System */
+	--order-pending: 22 87% 52%; /* Saffron */
+	--order-ready: 41 87% 54%; /* Gold */
+	--order-completed: 142 71% 45%; /* Green */
+	--order-cancelled: 210 9% 31%; /* Dark Gray */
+
 	/* Shadcn/UI Variables updated with FaraalKhata colors */
 	--background: var(--faraal-warm-white);
 	--foreground: var(--faraal-charcoal);
