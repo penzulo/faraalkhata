@@ -210,9 +210,9 @@ export const ordersApi = {
 		if (currentOrder.status === "completed")
 			throw new Error("Cannot edit completed orders");
 
-		const today = new Date().toISOString().split("T")[0];
-		if (currentOrder.due_date === today)
-			throw new Error("Cannot edit orders on their due date");
+		// const today = new Date().toISOString().split("T")[0];
+		// if (currentOrder.due_date === today)
+		// 	throw new Error("Cannot edit orders on their due date");
 
 		// Delete existing order items
 		await supabase.from("order_items").delete().eq("order_id", id);

@@ -44,7 +44,6 @@ export function Step1Customer({
 	// Filter customers based on search
 	const filteredCustomers = useMemo(() => {
 		if (!searchQuery.trim()) return customers;
-
 		const query = searchQuery.toLowerCase();
 		return customers.filter(
 			(customer) =>
@@ -71,7 +70,14 @@ export function Step1Customer({
 			{/* Customer Selection */}
 			<form.Field
 				name="customer_id"
-				validators={{ onChange: validators.customer_id }}
+				validators={{
+					onChange:
+						validators?.customer_id ||
+						(({ value }: any) => {
+							if (!value) return "Please select a customer";
+							return undefined;
+						}),
+				}}
 			>
 				{(field: any) => (
 					<div className="space-y-2">
@@ -104,7 +110,11 @@ export function Step1Customer({
 										<button
 											key={customer.id}
 											type="button"
-											onClick={() => field.handleChange(customer.id)}
+											onClick={() => {
+												field.handleChange(customer.id);
+												// Force validation after selection
+												field.handleBlur();
+											}}
 											className={`w-full rounded-lg border-2 p-3 text-left transition-colors ${
 												isSelected
 													? "border-orange-500 bg-orange-50"
@@ -201,14 +211,16 @@ export function Step1Customer({
 					<div className="space-y-2">
 						<Label htmlFor={referralFieldId}>Referral Partner (Optional)</Label>
 						<Select
-							value={field.state.value}
-							onValueChange={field.handleChange}
+							value={field.state.value || "none"}
+							onValueChange={(value) =>
+								field.handleChange(value === "none" ? "" : value)
+							}
 						>
 							<SelectTrigger id={referralFieldId}>
 								<SelectValue placeholder="Select referral partner (if any)" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="">None</SelectItem>
+								<SelectItem value="none">None</SelectItem>
 								{referralPartners.map((partner) => (
 									<SelectItem key={partner.id} value={partner.id}>
 										<div className="flex w-full items-center justify-between">
@@ -236,6 +248,11 @@ export function Step1Customer({
 				onClose={closeQuickAdd}
 				onSuccess={(customerId) => {
 					form.setFieldValue("customer_id", customerId);
+					// Force validation after setting value
+					const field = form.getFieldMeta("customer_id");
+					if (field) {
+						form.validateField("customer_id");
+					}
 					closeQuickAdd();
 				}}
 			/>

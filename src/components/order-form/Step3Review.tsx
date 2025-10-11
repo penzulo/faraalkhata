@@ -165,19 +165,28 @@ export function Step3Review({
 							{field.state.value && (
 								<div className="space-y-3 pl-6">
 									{/* Address Selection */}
+									{/* Address Selection */}
 									<form.Field name="delivery_address_id">
 										{(addressField: any) => (
 											<div className="space-y-2">
 												<Label>Delivery Address *</Label>
 												{customerAddresses.length > 0 ? (
 													<Select
-														value={addressField.state.value}
-														onValueChange={addressField.handleChange}
+														value={addressField.state.value || "none"} // Changed
+														onValueChange={(value) =>
+															addressField.handleChange(
+																value === "none" ? "" : value,
+															)
+														} // Changed
 													>
 														<SelectTrigger>
 															<SelectValue placeholder="Select delivery address" />
 														</SelectTrigger>
 														<SelectContent>
+															<SelectItem value="none">
+																Select an address
+															</SelectItem>{" "}
+															{/* Changed */}
 															{customerAddresses.map((address) => (
 																<SelectItem key={address.id} value={address.id}>
 																	<div className="text-sm">
