@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthStore } from "@/stores/auth";
 
 const loginSchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_public/login")({
 });
 
 function LoginPage() {
-	const { signInWithMagicLink, loading, error, clearError } = useAuth();
+	const { signInWithLoginLink, loading, error, clearError } = useAuthStore();
 	const { redirect } = Route.useSearch();
 	const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -61,13 +61,13 @@ function LoginPage() {
 						: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent("/dashboard")}`;
 
 				// Pass full_name in user metadata for Supabase
-				await signInWithMagicLink(value.email, redirectUrl, {
+				await signInWithLoginLink(value.email, redirectUrl, {
 					data: {
 						full_name: value.full_name,
 					},
 				});
 
-				toast.success("Magic link sent!", {
+				toast.success("Login link sent!", {
 					description: "Please check your email and click the link to sign in.",
 				});
 			} catch (error) {

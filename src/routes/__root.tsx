@@ -4,15 +4,14 @@ import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
+import { useEffect } from "react";
 import { Toaster } from "sonner";
 import { ErrorComponent } from "@/components/shared/ErrorComponent";
 import { NotFound } from "@/components/shared/NotFound";
-import { AuthProvider } from "@/contexts/AuthContext";
-import type { AuthContextType } from "@/types/auth";
+import { useAuthStore } from "@/stores/auth";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
-	auth?: AuthContextType;
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -22,8 +21,14 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 });
 
 function RootComponent() {
+	const init = useAuthStore((state) => state.init);
+
+	useEffect(() => {
+		init();
+	}, [init]);
+
 	return (
-		<AuthProvider>
+		<>
 			<Outlet />
 			<Toaster
 				position="top-right"
@@ -50,6 +55,6 @@ function RootComponent() {
 					FormDevtoolsPlugin(),
 				]}
 			/>
-		</AuthProvider>
+		</>
 	);
 }

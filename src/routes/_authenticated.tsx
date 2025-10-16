@@ -6,8 +6,12 @@ import {
 } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import {
+	useAuthLoading,
+	useAuthStore,
+	useIsAuthenticated,
+} from "@/stores/auth";
 
 export const Route = createFileRoute("/_authenticated")({
 	component: AuthenticatedLayout,
@@ -15,7 +19,6 @@ export const Route = createFileRoute("/_authenticated")({
 		const currentPath = location.pathname;
 
 		try {
-			// Check if we have a valid session
 			const {
 				data: { session },
 				error,
@@ -30,7 +33,6 @@ export const Route = createFileRoute("/_authenticated")({
 				});
 			}
 		} catch (redirectError) {
-			// Re-throw redirect errors
 			if (
 				redirectError &&
 				typeof redirectError === "object" &&
@@ -39,7 +41,6 @@ export const Route = createFileRoute("/_authenticated")({
 				throw redirectError;
 			}
 
-			// For other errors, redirect to login
 			throw redirect({
 				to: "/login",
 				search: {
@@ -51,17 +52,18 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthenticatedLayout() {
-	const { loading, user, session } = useAuth();
+	const loading = useAuthLoading();
+	const isAuthenticated = useIsAuthenticated();
+	const initialized = useAuthStore((state) => state.initialized);
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (!loading && (!user || !session)) {
+		if (initialized && !loading && !isAuthenticated) {
 			navigate({ to: "/login" });
 		}
-	}, [user, session, loading, navigate]);
+	}, [isAuthenticated, loading, initialized, navigate]);
 
-	// Only show loading if we don't have a user and we're actually loading
-	if (loading || !user || !session) {
+	if (!initialized || loading || !isAuthenticated) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background">
 				<div className="flex flex-col items-center gap-4">

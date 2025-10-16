@@ -1,20 +1,21 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuthLoading, useUser } from "@/stores/auth";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
 	component: Dashboard,
 });
 
 function Dashboard() {
-	const { user, loading } = useAuth();
+	const user = useUser();
+	const isLoading = useAuthLoading();
 	const navigate = useNavigate();
 
 	useEffect(() => {
-		if (!loading && !user) navigate({ to: "/login" });
-	}, [user, loading, navigate]);
+		if (!isLoading && !user) navigate({ to: "/login" });
+	}, [user, isLoading, navigate]);
 
-	if (loading || !user) {
+	if (isLoading || !user) {
 		return (
 			<div className="flex min-h-screen items-center justify-center">
 				<div className="h-8 w-8 animate-spin rounded-full border-gray-900 border-b-2" />

@@ -97,13 +97,14 @@ export function OrdersPage() {
 	}, [closeForm]);
 
 	// Status filter options
-	const statusOptions = [
-		{ value: "all", label: "All Orders" },
-		{ value: "pending", label: "Pending" },
-		{ value: "ready_for_pickup", label: "Ready for Pickup" },
-		{ value: "completed", label: "Completed" },
-		{ value: "cancelled", label: "Cancelled" },
-	];
+	// TODO: Figure out how to use this.
+	// const statusOptions = [
+	// 	{ value: "all", label: "All Orders" },
+	// 	{ value: "pending", label: "Pending" },
+	// 	{ value: "ready_for_pickup", label: "Ready for Pickup" },
+	// 	{ value: "completed", label: "Completed" },
+	// 	{ value: "cancelled", label: "Cancelled" },
+	// ];
 
 	const handleStatusFilterChange = (value: string) => {
 		if (value === "all") {

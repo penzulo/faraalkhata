@@ -33,8 +33,8 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
+import { useAuthStore, usePublicUser, useUser } from "@/stores/auth";
 
 interface AppLayoutProps {
 	children: React.ReactNode;
@@ -84,7 +84,9 @@ function DesktopNavContent({
 	collapsed = false,
 	onToggleCollapse,
 }: NavContentProps) {
-	const { user, publicUser, signOut } = useAuth();
+	const user = useUser();
+	const publicUser = usePublicUser();
+	const signOut = useAuthStore((state) => state.signOut);
 	const navigate = useNavigate();
 	const location = useLocation();
 
@@ -335,7 +337,9 @@ function DesktopNavContent({
 }
 
 function MobileNavContent({ onLinkClick }: NavContentProps) {
-	const { user, publicUser, signOut } = useAuth();
+	const user = useUser();
+	const publicUser = usePublicUser();
+	const signOut = useAuthStore((state) => state.signOut);
 	const navigate = useNavigate();
 	const location = useLocation();
 
