@@ -8,18 +8,19 @@ import {
 	useUpdateCustomer,
 } from "@/hooks/useCustomers";
 import { customerUtils } from "@/lib/api/customers";
-import type {
-	CustomerFormData,
-	CustomerWithCategories,
-} from "@/types/customer";
+import type { CustomerWithCategories } from "@/types/customer";
 
 const customerSchema = z.object({
 	name: z.string().min(2, "Customer name must be at least 2 characters"),
 	phone: z
 		.string()
+		.min(1, "Phone number is required")
 		.regex(/^[6-9]\d{9}$/, "Please enter a valid 10-digit Indian mobile number")
 		.transform((val) => customerUtils.cleanPhoneNumber(val)),
-	notes: z.string().optional(),
+	notes: z
+		.string()
+		.max(500, "Notes should be less than 500 characters.")
+		.optional(),
 	category_ids: z.array(z.string()).default([]),
 });
 
@@ -35,6 +36,42 @@ interface UseCustomerFormProps {
 	editCustomer?: CustomerWithCategories | null;
 	onClose: () => void;
 }
+
+const calculateCompletionScore = (
+	hasName: boolean,
+	isPhoneValid: boolean,
+	hasNotes: boolean,
+	hasCategoryIds: boolean,
+): {
+	score: number;
+	status: "excellent" | "good" | "fair" | "minimal";
+	color: string;
+} => {
+	const score =
+		(hasName ? 25 : 0) +
+		(isPhoneValid ? 35 : 0) +
+		(hasNotes ? 20 : 0) +
+		(hasCategoryIds ? 20 : 0);
+
+	let status: "excellent" | "good" | "fair" | "minimal";
+	let color: string;
+
+	if (score >= 80) {
+		status = "excellent";
+		color = "text-emerald-600";
+	} else if (score >= 60) {
+		status = "good";
+		color = "text-green-600";
+	} else if (score >= 40) {
+		status = "fair";
+		color = "text-yellow-600";
+	} else {
+		status = "minimal";
+		color = "text-red-600";
+	}
+
+	return { score, status, color };
+};
 
 export function useCustomerForm({
 	editCustomer,
@@ -68,35 +105,38 @@ export function useCustomerForm({
 			phone: editCustomer?.phone || "",
 			notes: editCustomer?.notes || "",
 			category_ids: editCustomer?.categories.map((cat) => cat.id) || [],
-		} as CustomerFormData,
+		},
 		onSubmit: async ({ value }) => {
-			try {
-				const validatedData = customerSchema.parse(value);
+			const validatedData = customerSchema.parse(value);
 
-				if (formMeta.isEditing && editCustomer) {
-					await updateCustomer.mutateAsync({
-						id: editCustomer.id,
-						data: validatedData,
-					});
-				} else {
-					await createCustomer.mutateAsync(validatedData);
-				}
-
-				handleClose();
-			} catch (error) {
-				if (error instanceof z.ZodError) {
-					console.error("Validation error:", error.errors);
-				} else {
-					console.error("Form submission error:", error);
-				}
+			if (formMeta.isEditing && editCustomer) {
+				await updateCustomer.mutateAsync({
+					id: editCustomer.id,
+					data: validatedData,
+				});
+			} else {
+				await createCustomer.mutateAsync(validatedData);
 			}
+
+			handleClose();
 		},
 	});
 
+	const categoryOptions = useMemo(() => {
+		return categories.map((category, index) => ({
+			value: category.id,
+			label: category.name,
+			color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+		}));
+	}, [categories]);
+
 	const customerInsights = useMemo(() => {
-		const name = form.state.values.name;
-		const phone = form.state.values.phone;
-		const selectedCategories = form.state.values.category_ids;
+		const {
+			name,
+			phone,
+			notes,
+			category_ids: selectedCategories,
+		} = form.state.values;
 
 		if (!name && !phone) {
 			return null;
@@ -111,28 +151,12 @@ export function useCustomerForm({
 			.filter((cat) => selectedCategories.includes(cat.id))
 			.map((cat) => cat.name);
 
-		let completionStatus: "excellent" | "good" | "fair" | "minimal";
-		let completionColor: string;
-
-		const completionScore =
-			(name ? 25 : 0) +
-			(phone && isPhoneValid ? 35 : 0) +
-			(form.state.values.notes ? 20 : 0) +
-			(selectedCategories.length > 0 ? 20 : 0);
-
-		if (completionScore >= 80) {
-			completionStatus = "excellent";
-			completionColor = "text-emerald-600";
-		} else if (completionScore >= 60) {
-			completionStatus = "good";
-			completionColor = "text-green-600";
-		} else if (completionScore >= 40) {
-			completionStatus = "fair";
-			completionColor = "text-yellow-600";
-		} else {
-			completionStatus = "minimal";
-			completionColor = "text-red-600";
-		}
+		const completion = calculateCompletionScore(
+			Boolean(name),
+			isPhoneValid,
+			Boolean(notes),
+			selectedCategories.length > 0,
+		);
 
 		return {
 			initials,
@@ -140,68 +164,16 @@ export function useCustomerForm({
 			isPhoneValid,
 			formattedPhone,
 			selectedCategoryNames,
-			completionScore,
-			completionStatus,
-			completionColor,
+			completionScore: completion.score,
+			completionStatus: completion.status,
+			completionColor: completion.color,
 			formatted: {
-				completion: `${completionScore}%`,
+				completion: `${completion.score}%`,
 				categories: selectedCategoryNames.join(", ") || "No categories",
 				phone: formattedPhone || "Not provided",
 			},
 		};
-	}, [
-		form.state.values.name,
-		form.state.values.phone,
-		form.state.values.notes,
-		form.state.values.category_ids,
-		categories,
-	]);
-
-	const validators = useMemo(
-		() => ({
-			name: ({ value }: { value: string }) => {
-				const result = z
-					.string()
-					.min(2, "Customer name must be at least 2 characters")
-					.safeParse(value);
-				return result.success ? undefined : result.error.errors[0]?.message;
-			},
-			phone: ({ value }: { value: string }) => {
-				const result = z
-					.string()
-					.regex(
-						/^[6-9]\d{9}$/,
-						"Please enter a valid 10-digit Indian mobile number",
-					)
-					.safeParse(customerUtils.cleanPhoneNumber(value));
-				return result.success ? undefined : result.error.errors[0]?.message;
-			},
-			notes: ({ value }: { value: string | undefined }) => {
-				if (!value) return undefined;
-				if (value.length > 500) {
-					return "Notes should be less than 500 characters";
-				}
-				return undefined;
-			},
-			categofy_ids: () => {
-				return undefined;
-			},
-		}),
-		[],
-	);
-
-	const categoryOptions = useMemo(() => {
-		return categories.map((category, index) => ({
-			value: category.id,
-			label: category.name,
-			color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-		}));
-	}, [categories]);
-
-	const formatPhoneForDisplay = useCallback((phone: string) => {
-		const cleaned = customerUtils.cleanPhoneNumber(phone);
-		return customerUtils.formatPhoneNumber(cleaned);
-	}, []);
+	}, [form.state.values, categories]);
 
 	const handleClose = useCallback(() => {
 		form.reset();
@@ -217,43 +189,20 @@ export function useCustomerForm({
 		[form],
 	);
 
-	const handlePhoneChange = useCallback((value: string) => {
-		const cleaned = value.replace(/\D/g, "");
-		const limited = cleaned.slice(0, 10);
-		return limited;
-	}, []);
-
-	const addCategory = useCallback(
-		(categoryId: string) => {
-			const currentIds = form.getFieldValue("category_ids") as string[];
-			if (!currentIds.includes(categoryId)) {
-				form.setFieldValue("category_ids", [...currentIds, categoryId]);
-			}
-		},
-		[form],
-	);
-
-	const removeCategory = useCallback(
-		(categoryId: string) => {
-			const currentIds = form.getFieldValue("category_ids") as string[];
-			form.setFieldValue(
-				"category_ids",
-				currentIds.filter((id) => id !== categoryId),
-			);
-		},
-		[form],
+	const handlePhoneChange = useCallback(
+		(value: string): string => value.replace(/\D/g, "").slice(0, 10),
+		[],
 	);
 
 	const toggleCategory = useCallback(
 		(categoryId: string) => {
-			const currentIds = form.getFieldValue("category_ids") as string[];
-			if (currentIds.includes(categoryId)) {
-				removeCategory(categoryId);
-			} else {
-				addCategory(categoryId);
-			}
+			form.setFieldValue("category_ids", (prev: string[]) =>
+				prev.includes(categoryId)
+					? prev.filter((id) => id !== categoryId)
+					: [...prev, categoryId],
+			);
 		},
-		[addCategory, removeCategory, form.getFieldValue],
+		[form],
 	);
 
 	return {
@@ -262,23 +211,13 @@ export function useCustomerForm({
 		isDesktop,
 		showCategoryManager,
 		customerInsights,
-		validators,
 		categoryOptions,
 		handleClose,
 		handleSubmit,
 		handlePhoneChange,
-		formatPhoneForDisplay,
 		toggleCategoryManager,
-		addCategory,
-		removeCategory,
 		toggleCategory,
-		utils: {
-			getInitials: customerUtils.getCustomerInitials,
-			getAvatarColor: customerUtils.getAvatarColor,
-			isValidPhone: customerUtils.isValidIndianPhone,
-			formatPhone: customerUtils.formatPhoneNumber,
-		},
-	};
+	} as const;
 }
 
 export type UseCustomerFormReturn = ReturnType<typeof useCustomerForm>;

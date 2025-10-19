@@ -33,11 +33,11 @@ export function CustomerForm({
 		formMeta,
 		isDesktop,
 		customerInsights,
-		validators,
 		categoryOptions,
 		handleClose,
 		handleSubmit,
 		handlePhoneChange,
+		toggleCategory,
 	} = useCustomerForm({
 		editCustomer,
 		onClose,
@@ -46,20 +46,21 @@ export function CustomerForm({
 	const nameId = useId();
 	const phoneId = useId();
 	const notesId = useId();
-	const notesSvgTitleId = useId();
 
 	return (
 		<Sheet open={isOpen} onOpenChange={handleClose}>
 			<SheetContent
 				side={isDesktop ? "right" : "bottom"}
-				className={isDesktop ? "w-[500px] sm:max-w-[500px]" : "h-[90vh]"}
+				className={`${isDesktop ? "w-[500px] sm:max-w-[500px]" : "h-[90vh]"} dark:border-gray-800 dark:bg-gray-900`}
 			>
 				<SheetHeader>
-					<SheetTitle className="flex items-center gap-2">
+					<SheetTitle className="flex items-center gap-2 dark:text-gray-100">
 						<Users className="h-5 w-5" />
 						{formMeta.title}
 					</SheetTitle>
-					<SheetDescription>{formMeta.description}</SheetDescription>
+					<SheetDescription className="dark:text-gray-400">
+						{formMeta.description}
+					</SheetDescription>
 				</SheetHeader>
 
 				<ScrollArea
@@ -68,29 +69,29 @@ export function CustomerForm({
 					}
 				>
 					<form onSubmit={handleSubmit} className="space-y-6 py-4">
-						{/* Customer Preview Card */}
+						{/* Customer Preview Card with dark mode */}
 						{customerInsights && (
-							<div className="rounded-lg border bg-gradient-to-r from-blue-50 to-indigo-50 p-4">
+							<div className="rounded-lg border border-blue-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-4 dark:border-blue-900 dark:from-blue-950 dark:to-indigo-950">
 								<div className="mb-3 flex items-center gap-3">
 									<div
-										className="flex h-12 w-12 items-center justify-center rounded-full font-semibold text-white"
+										className="flex h-12 w-12 items-center justify-center rounded-full font-semibold text-white shadow-sm"
 										style={{ backgroundColor: customerInsights.avatarColor }}
 									>
 										{customerInsights.initials}
 									</div>
 									<div className="flex-1">
 										<div className="mb-1 flex items-center gap-2">
-											<h4 className="font-medium text-gray-900">
+											<h4 className="font-medium text-gray-900 dark:text-gray-100">
 												{form.state.values.name || "New Customer"}
 											</h4>
 											<Badge
 												variant="outline"
-												className={customerInsights.completionColor}
+												className={`${customerInsights.completionColor} dark:border-gray-600`}
 											>
 												{customerInsights.formatted.completion} complete
 											</Badge>
 										</div>
-										<div className="space-y-1 text-gray-600 text-sm">
+										<div className="space-y-1 text-gray-600 text-sm dark:text-gray-300">
 											{customerInsights.formattedPhone && (
 												<div className="flex items-center gap-1">
 													<Phone className="h-3 w-3" />
@@ -107,11 +108,24 @@ export function CustomerForm({
 							</div>
 						)}
 
-						{/* Customer Name Field */}
-						<form.Field name="name" validators={{ onChange: validators.name }}>
+						{/* Customer Name Field with dark mode */}
+						<form.Field
+							name="name"
+							validators={{
+								onChange: ({ value }) => {
+									if (!value || value.length < 2) {
+										return "Customer name must be at least 2 characters";
+									}
+									return undefined;
+								},
+							}}
+						>
 							{(field) => (
 								<div className="space-y-2">
-									<Label htmlFor={nameId} className="font-medium text-sm">
+									<Label
+										htmlFor={nameId}
+										className="font-medium text-sm dark:text-gray-200"
+									>
 										Customer Name *
 									</Label>
 									<Input
@@ -120,29 +134,51 @@ export function CustomerForm({
 										value={field.state.value}
 										onChange={(e) => field.handleChange(e.target.value)}
 										onBlur={field.handleBlur}
+										aria-invalid={field.state.meta.errors.length > 0}
+										className="dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
 									/>
-									{field.state.meta.errors.length > 0 && (
-										<p className="text-red-500 text-sm">
-											{field.state.meta.errors[0]}
-										</p>
-									)}
+									{field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0 && (
+											<p
+												className="text-red-500 text-sm dark:text-red-400"
+												role="alert"
+											>
+												{field.state.meta.errors[0]}
+											</p>
+										)}
 								</div>
 							)}
 						</form.Field>
 
-						{/* Phone Number Field */}
+						{/* Phone Number Field with dark mode */}
 						<form.Field
 							name="phone"
-							validators={{ onChange: validators.phone }}
+							validators={{
+								onChange: ({ value }) => {
+									const cleaned = value.replace(/\D/g, "");
+									if (!cleaned) {
+										return "Phone number is required";
+									}
+									if (!/^[6-9]\d{9}$/.test(cleaned)) {
+										return "Please enter a valid 10-digit Indian mobile number";
+									}
+									return undefined;
+								},
+							}}
 						>
 							{(field) => (
 								<div className="space-y-2">
-									<Label htmlFor={phoneId} className="font-medium text-sm">
+									<Label
+										htmlFor={phoneId}
+										className="font-medium text-sm dark:text-gray-200"
+									>
 										Phone Number *
 									</Label>
 									<div className="relative">
 										<div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-											<span className="text-gray-500 text-sm">+91</span>
+											<span className="text-gray-500 text-sm dark:text-gray-400">
+												+91
+											</span>
 										</div>
 										<Input
 											id={phoneId}
@@ -153,18 +189,23 @@ export function CustomerForm({
 												field.handleChange(handlePhoneChange(e.target.value))
 											}
 											onBlur={field.handleBlur}
-											className="pl-12"
+											className="pl-12 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
 											maxLength={10}
+											aria-invalid={field.state.meta.errors.length > 0}
 										/>
 									</div>
-									{field.state.meta.errors.length > 0 ? (
-										<p className="text-red-500 text-sm">
+									{field.state.meta.isTouched &&
+									field.state.meta.errors.length > 0 ? (
+										<p
+											className="text-red-500 text-sm dark:text-red-400"
+											role="alert"
+										>
 											{field.state.meta.errors[0]}
 										</p>
 									) : (
 										field.state.value &&
 										customerInsights?.isPhoneValid && (
-											<p className="mt-1 text-green-600 text-xs">
+											<p className="mt-1 text-green-600 text-xs dark:text-green-400">
 												✓ Valid Indian mobile number
 											</p>
 										)
@@ -173,19 +214,19 @@ export function CustomerForm({
 							)}
 						</form.Field>
 
-						{/* Categories Field */}
+						{/* Categories Field with dark mode */}
 						<form.Field name="category_ids">
 							{(field) => (
 								<div className="space-y-2">
-									<Label htmlFor="categories" className="font-medium text-sm">
+									<Label className="font-medium text-sm dark:text-gray-200">
 										Categories (Optional)
 									</Label>
 									<div className="space-y-3">
-										<p className="text-gray-500 text-sm">
+										<p className="text-gray-500 text-sm dark:text-gray-400">
 											Select categories that best describe this customer
 										</p>
 
-										{/* Category Options Grid */}
+										{/* Category Options Grid with dark mode */}
 										<div
 											className={`grid gap-2 ${isDesktop ? "grid-cols-2" : "grid-cols-1"}`}
 										>
@@ -199,30 +240,17 @@ export function CustomerForm({
 														type="button"
 														className={`flex items-center space-x-2 rounded-lg border-2 p-3 text-left transition-colors ${
 															isSelected
-																? "border-blue-500 bg-blue-50"
-																: "border-gray-200 hover:border-gray-300"
+																? "border-blue-500 bg-blue-50 dark:border-blue-600 dark:bg-blue-950"
+																: "border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
 														}`}
-														onClick={() => {
-															const currentIds = field.state.value;
-															if (currentIds.includes(category.value)) {
-																field.handleChange(
-																	currentIds.filter(
-																		(id) => id !== category.value,
-																	),
-																);
-															} else {
-																field.handleChange([
-																	...currentIds,
-																	category.value,
-																]);
-															}
-														}}
+														onClick={() => toggleCategory(category.value)}
+														aria-pressed={isSelected}
 													>
 														<div
 															className={`flex h-4 w-4 items-center justify-center rounded border-2 ${
 																isSelected
-																	? "border-blue-500 bg-blue-500"
-																	: "border-gray-300"
+																	? "border-blue-500 bg-blue-500 dark:border-blue-600 dark:bg-blue-600"
+																	: "border-gray-300 dark:border-gray-600"
 															}`}
 														>
 															{isSelected && (
@@ -231,8 +259,8 @@ export function CustomerForm({
 																	fill="none"
 																	viewBox="0 0 24 24"
 																	stroke="currentColor"
+																	aria-hidden="true"
 																>
-																	<title id={notesSvgTitleId}>Selected</title>
 																	<path
 																		strokeLinecap="round"
 																		strokeLinejoin="round"
@@ -242,7 +270,7 @@ export function CustomerForm({
 																</svg>
 															)}
 														</div>
-														<span className="flex-1 font-medium text-sm">
+														<span className="flex-1 font-medium text-sm dark:text-gray-200">
 															{category.label}
 														</span>
 													</button>
@@ -250,7 +278,7 @@ export function CustomerForm({
 											})}
 										</div>
 
-										{/* Selected Categories Preview */}
+										{/* Selected Categories Preview with dark mode */}
 										{field.state.value.length > 0 && (
 											<div className="mt-3 flex flex-wrap gap-2">
 												{field.state.value.map((categoryId) => {
@@ -262,21 +290,16 @@ export function CustomerForm({
 														<Badge
 															key={categoryId}
 															variant="secondary"
-															className="flex items-center gap-1"
+															className="flex items-center gap-1 dark:bg-gray-700 dark:text-gray-200"
 														>
 															{category.label}
 															<button
 																type="button"
-																onClick={() => {
-																	field.handleChange(
-																		field.state.value.filter(
-																			(id) => id !== categoryId,
-																		),
-																	);
-																}}
+																onClick={() => toggleCategory(categoryId)}
 																className="ml-1"
+																aria-label={`Remove ${category.label}`}
 															>
-																<X className="h-3 w-3 cursor-pointer hover:text-red-500" />
+																<X className="h-3 w-3 cursor-pointer hover:text-red-500 dark:hover:text-red-400" />
 															</button>
 														</Badge>
 													);
@@ -288,14 +311,24 @@ export function CustomerForm({
 							)}
 						</form.Field>
 
-						{/* Notes Field */}
+						{/* Notes Field with dark mode */}
 						<form.Field
 							name="notes"
-							validators={{ onChange: validators.notes }}
+							validators={{
+								onChange: ({ value }) => {
+									if (value && value.length > 500) {
+										return "Notes should be less than 500 characters";
+									}
+									return undefined;
+								},
+							}}
 						>
 							{(field) => (
 								<div className="space-y-2">
-									<Label htmlFor={notesId} className="font-medium text-sm">
+									<Label
+										htmlFor={notesId}
+										className="font-medium text-sm dark:text-gray-200"
+									>
 										Notes (Optional)
 									</Label>
 									<Textarea
@@ -306,20 +339,26 @@ export function CustomerForm({
 										onBlur={field.handleBlur}
 										rows={3}
 										maxLength={500}
+										aria-invalid={field.state.meta.errors.length > 0}
+										className="dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
 									/>
-									<p className="mt-1 text-gray-400 text-xs">
+									<p className="mt-1 text-gray-400 text-xs dark:text-gray-500">
 										{field.state.value?.length || 0}/500 characters
 									</p>
-									{field.state.meta.errors.length > 0 && (
-										<p className="text-red-500 text-sm">
-											{field.state.meta.errors[0]}
-										</p>
-									)}
+									{field.state.meta.isTouched &&
+										field.state.meta.errors.length > 0 && (
+											<p
+												className="text-red-500 text-sm dark:text-red-400"
+												role="alert"
+											>
+												{field.state.meta.errors[0]}
+											</p>
+										)}
 								</div>
 							)}
 						</form.Field>
 
-						<Separator />
+						<Separator className="dark:bg-gray-700" />
 
 						{/* Form Actions */}
 						<div
@@ -330,13 +369,17 @@ export function CustomerForm({
 								variant="outline"
 								onClick={handleClose}
 								disabled={formMeta.isLoading}
-								className={isDesktop ? "flex-1" : "w-full"}
+								className={`${isDesktop ? "flex-1" : "w-full"} dark:border-gray-700 dark:hover:bg-gray-800`}
 							>
 								Cancel
 							</Button>
 							<Button
 								type="submit"
-								disabled={formMeta.isLoading || !form.state.canSubmit}
+								disabled={
+									formMeta.isLoading ||
+									!form.state.canSubmit ||
+									form.state.isSubmitting
+								}
 								className={isDesktop ? "flex-1" : "w-full"}
 							>
 								{formMeta.isLoading

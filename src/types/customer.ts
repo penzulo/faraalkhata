@@ -30,8 +30,8 @@ export interface CustomerWithCategories extends Customer {
 export interface CustomerFormData {
 	name: string;
 	phone: string;
-	notes?: string;
 	category_ids: string[];
+	notes?: string | undefined;
 }
 
 export interface CustomerSearchParams {

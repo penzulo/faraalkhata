@@ -40,7 +40,7 @@ code {
 	--order-completed: 142 71% 45%; /* Green */
 	--order-cancelled: 210 9% 31%; /* Dark Gray */
 
-	/* Shadcn/UI Variables updated with FaraalKhata colors */
+	/* Shadcn/UI Variables - Light Mode */
 	--background: var(--faraal-warm-white);
 	--foreground: var(--faraal-charcoal);
 	--card: var(--faraal-warm-white);
@@ -79,26 +79,53 @@ code {
 }
 
 .dark {
-	/* Dark theme provisions - implement later */
-	--background: var(--faraal-charcoal);
-	--foreground: var(--faraal-warm-white);
-	--card: var(--faraal-dark-gray);
-	--card-foreground: var(--faraal-warm-white);
-	--popover: var(--faraal-dark-gray);
-	--popover-foreground: var(--faraal-warm-white);
-	--primary: var(--faraal-saffron);
-	--primary-foreground: var(--faraal-warm-white);
-	--secondary: var(--faraal-dark-gray);
-	--secondary-foreground: var(--faraal-warm-white);
-	--muted: var(--faraal-medium-gray);
-	--muted-foreground: var(--faraal-light-gray);
-	--accent: var(--faraal-gold);
-	--accent-foreground: var(--faraal-charcoal);
-	--destructive: var(--faraal-terracotta);
-	--destructive-foreground: var(--faraal-warm-white);
-	--border: var(--faraal-medium-gray);
-	--input: var(--faraal-medium-gray);
-	--ring: var(--faraal-saffron);
+	/* True OLED/AMOLED Dark Mode - Pure Black (#000000) for maximum battery savings */
+	/* Uses true black for backgrounds to turn off OLED pixels completely */
+	--background: 0 0% 0%; /* Pure Black #000000 */
+	--foreground: 0 0% 95%; /* Near White #F2F2F2 */
+
+	/* Cards use slightly elevated dark gray for depth perception */
+	--card: 0 0% 7%; /* Very Dark Gray #121212 */
+	--card-foreground: 0 0% 95%; /* Near White #F2F2F2 */
+
+	/* Popovers elevated for visual hierarchy */
+	--popover: 0 0% 7%; /* Very Dark Gray #121212 */
+	--popover-foreground: 0 0% 95%; /* Near White #F2F2F2 */
+
+	/* Primary colors adjusted for dark mode - slightly desaturated */
+	--primary: 22 82% 58%; /* Lighter Saffron for better visibility */
+	--primary-foreground: 0 0% 100%; /* Pure White */
+
+	/* Secondary uses dark gray for subtle distinction */
+	--secondary: 0 0% 12%; /* Dark Gray #1E1E1E */
+	--secondary-foreground: 0 0% 95%; /* Near White #F2F2F2 */
+
+	/* Muted elements for disabled states and subtle text */
+	--muted: 0 0% 15%; /* Muted Dark Gray #262626 */
+	--muted-foreground: 0 0% 65%; /* Medium Gray #A6A6A6 */
+
+	/* Accent color adjusted for dark mode */
+	--accent: 41 85% 60%; /* Lighter Gold for visibility */
+	--accent-foreground: 0 0% 10%; /* Dark for contrast */
+
+	/* Destructive actions remain visible */
+	--destructive: 14 70% 50%; /* Adjusted Terracotta */
+	--destructive-foreground: 0 0% 100%; /* Pure White */
+
+	/* Borders use subtle gray to maintain separation without harshness */
+	--border: 0 0% 20%; /* Subtle Border Gray #333333 */
+	--input: 0 0% 20%; /* Input Border Gray #333333 */
+	--ring: 22 82% 58%; /* Lighter Saffron for focus rings */
+
+	/* Sidebar dark mode with pure black base */
+	--sidebar: 0 0% 0%; /* Pure Black #000000 */
+	--sidebar-foreground: 0 0% 95%; /* Near White #F2F2F2 */
+	--sidebar-primary: 22 82% 58%; /* Lighter Saffron */
+	--sidebar-primary-foreground: 0 0% 100%; /* Pure White */
+	--sidebar-accent: 0 0% 12%; /* Dark Gray #1E1E1E */
+	--sidebar-accent-foreground: 0 0% 95%; /* Near White #F2F2F2 */
+	--sidebar-border: 0 0% 20%; /* Subtle Border */
+	--sidebar-ring: 22 82% 58%; /* Lighter Saffron */
 }
 
 /* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind at-rule */
@@ -161,6 +188,10 @@ code {
 	body {
 		/* biome-ignore lint/suspicious/noUnknownAtRules: Tailwind at-rule */
 		@apply bg-background text-foreground font-normal;
+		/* Smooth color transitions for theme switching */
+		transition:
+			background-color 0.3s ease,
+			color 0.3s ease;
 	}
 	h1,
 	h2,
@@ -185,5 +216,29 @@ code {
 
 	.faraal-shadow {
 		box-shadow: 0 4px 16px -4px hsl(var(--faraal-saffron) / 0.1);
+	}
+
+	/* Dark mode specific shadow - subtle elevation without harsh contrast */
+	.dark .faraal-shadow {
+		box-shadow: 0 4px 16px -4px hsl(0 0% 0% / 0.5);
+	}
+
+	/* OLED-optimized scrollbar for dark mode */
+	.dark ::-webkit-scrollbar {
+		width: 8px;
+		height: 8px;
+	}
+
+	.dark ::-webkit-scrollbar-track {
+		background: hsl(0 0% 0%);
+	}
+
+	.dark ::-webkit-scrollbar-thumb {
+		background: hsl(0 0% 20%);
+		border-radius: 4px;
+	}
+
+	.dark ::-webkit-scrollbar-thumb:hover {
+		background: hsl(0 0% 30%);
 	}
 }

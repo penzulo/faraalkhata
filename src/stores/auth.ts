@@ -186,5 +186,6 @@ export const useIsInitialized = () => useAuthStore((s) => s.initialized);
 export const useAuthActions = () =>
 	useAuthStore((s) => ({
 		signInWithLoginLink: s.signInWithLoginLink,
+		signOut: s.signOut,
 		clearError: s.clearError,
 	}));
