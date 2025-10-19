@@ -1,21 +1,23 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useAuthStore } from "@/stores/auth";
 
 export const Route = createFileRoute("/_public")({
 	component: PublicLayout,
 	beforeLoad: async () => {
-		// Check if user is already authenticated
-		const {
-			data: { session },
-		} = await import("../lib/supabase").then(({ supabase }) =>
-			supabase.auth.getSession(),
-		);
+		const { session, user } = useAuthStore.getState();
 
-		if (session) {
-			// If user is authenticated and trying to access login, redirect to dashboard
+		if (!!session && !!user) {
+			console.log(
+				"[_public:beforeLoad] User is authenticated, redirecting to `/dashboard`",
+			);
 			throw redirect({
 				to: "/dashboard",
 			});
 		}
+
+		console.log(
+			"[_public:beforeLoad] User is not authenticated. ALlowing access.",
+		);
 	},
 });
 

@@ -14,15 +14,16 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import type { UseOrderFormReturn } from "@/hooks/useOrderForm";
 import { customerUtils } from "@/lib/api/customers";
 import type { CustomerWithCategories } from "@/types/customer";
 import type { ReferralPartner } from "@/types/order";
 
 interface Step1CustomerProps {
-	form: any;
+	form: UseOrderFormReturn["form"];
 	customers: CustomerWithCategories[];
 	referralPartners: ReferralPartner[];
-	validators: any;
+	validators: UseOrderFormReturn["validators"];
 }
 
 export function Step1Customer({
@@ -41,7 +42,6 @@ export function Step1Customer({
 	const customerFieldId = useId();
 	const referralFieldId = useId();
 
-	// Filter customers based on search
 	const filteredCustomers = useMemo(() => {
 		if (!searchQuery.trim()) return customers;
 		const query = searchQuery.toLowerCase();
@@ -52,7 +52,6 @@ export function Step1Customer({
 		);
 	}, [customers, searchQuery]);
 
-	// Get selected customer
 	const selectedCustomer = useMemo(() => {
 		return customers.find((c) => c.id === form.state.values.customer_id);
 	}, [customers, form.state.values.customer_id]);
@@ -73,13 +72,13 @@ export function Step1Customer({
 				validators={{
 					onChange:
 						validators?.customer_id ||
-						(({ value }: any) => {
+						(({ value }) => {
 							if (!value) return "Please select a customer";
 							return undefined;
 						}),
 				}}
 			>
-				{(field: any) => (
+				{(field) => (
 					<div className="space-y-2">
 						<Label htmlFor={customerFieldId}>Customer *</Label>
 
@@ -207,7 +206,7 @@ export function Step1Customer({
 
 			{/* Referral Partner (Optional) */}
 			<form.Field name="referral_partner_id">
-				{(field: any) => (
+				{(field) => (
 					<div className="space-y-2">
 						<Label htmlFor={referralFieldId}>Referral Partner (Optional)</Label>
 						<Select

@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import type { UseOrderFormReturn } from "@/hooks/useOrderForm";
 import { useCustomerAddresses } from "@/hooks/useOrders";
 import { customerUtils } from "@/lib/api/customers";
 import { orderUtils } from "@/lib/api/orders";
@@ -31,10 +32,10 @@ import type { CustomerWithCategories } from "@/types/customer";
 import type { ProductWithCurrentPrice } from "@/types/product";
 
 interface Step3ReviewProps {
-	form: any;
+	form: UseOrderFormReturn["form"];
 	customers: CustomerWithCategories[];
 	products: ProductWithCurrentPrice[];
-	orderCalculations: any;
+	orderCalculations: UseOrderFormReturn["orderCalculations"];
 }
 
 export function Step3Review({
@@ -55,17 +56,14 @@ export function Step3Review({
 	const notesId = useId();
 	const checkBoxId = useId();
 
-	// Get selected customer
 	const selectedCustomer = useMemo(() => {
 		return customers.find((c) => c.id === form.state.values.customer_id);
 	}, [customers, form.state.values.customer_id]);
 
-	// Fetch customer addresses
 	const { data: customerAddresses = [] } = useCustomerAddresses(
 		form.state.values.customer_id || "",
 	);
 
-	// Get selected products
 	const selectedItems = form.state.values.items || [];
 
 	return (
@@ -115,7 +113,7 @@ export function Step3Review({
 					</h4>
 				</div>
 				<div className="space-y-2">
-					{selectedItems.map((item: any) => {
+					{selectedItems.map((item) => {
 						const product = products.find((p) => p.id === item.product_id);
 						if (!product) return null;
 
@@ -149,13 +147,15 @@ export function Step3Review({
 				</div>
 
 				<form.Field name="needs_delivery">
-					{(field: any) => (
+					{(field) => (
 						<div className="space-y-4">
 							<div className="flex items-center space-x-2">
 								<Checkbox
 									id={checkBoxId}
 									checked={field.state.value}
-									onCheckedChange={field.handleChange}
+									onCheckedChange={(checked) => {
+										field.handleChange(checked === true);
+									}}
 								/>
 								<Label htmlFor={checkBoxId} className="cursor-pointer">
 									This order needs delivery
@@ -167,7 +167,7 @@ export function Step3Review({
 									{/* Address Selection */}
 									{/* Address Selection */}
 									<form.Field name="delivery_address_id">
-										{(addressField: any) => (
+										{(addressField) => (
 											<div className="space-y-2">
 												<Label>Delivery Address *</Label>
 												{customerAddresses.length > 0 ? (
@@ -223,7 +223,7 @@ export function Step3Review({
 
 									{/* Delivery Fee */}
 									<form.Field name="delivery_fee">
-										{(feeField: any) => (
+										{(feeField) => (
 											<div className="space-y-2">
 												<Label htmlFor={deliveryFeeId}>Delivery Fee</Label>
 												<div className="relative">
@@ -257,7 +257,7 @@ export function Step3Review({
 
 			{/* Due Date */}
 			<form.Field name="due_date">
-				{(field: any) => (
+				{(field) => (
 					<div className="space-y-2">
 						<Label htmlFor={dueDateId}>
 							<Calendar className="mr-1 inline h-4 w-4" />
@@ -281,7 +281,7 @@ export function Step3Review({
 
 			{/* Discount */}
 			<form.Field name="discount_amount">
-				{(field: any) => (
+				{(field) => (
 					<div className="space-y-2">
 						<Label htmlFor={discountId}>
 							<Percent className="mr-1 inline h-4 w-4" />
@@ -311,7 +311,7 @@ export function Step3Review({
 
 			{/* Notes */}
 			<form.Field name="notes">
-				{(field: any) => (
+				{(field) => (
 					<div className="space-y-2">
 						<Label htmlFor={notesId}>
 							<StickyNote className="mr-1 inline h-4 w-4" />

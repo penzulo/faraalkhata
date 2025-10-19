@@ -12,11 +12,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import type { UseOrderFormReturn } from "@/hooks/useOrderForm";
 import { orderUtils } from "@/lib/api/orders";
 import type { ProductWithCurrentPrice } from "@/types/product";
 
 interface Step2ProductsProps {
-	form: any;
+	form: UseOrderFormReturn["form"];
 	products: ProductWithCurrentPrice[];
 	addProduct: (productId: string) => void;
 	removeProduct: (productId: string) => void;
@@ -61,12 +62,12 @@ export function Step2Products({
 					<h4 className="font-medium text-sm">
 						Selected Products ({selectedItems.length})
 					</h4>
-					{selectedItems.map((item: any) => {
+					{selectedItems.map((item) => {
 						const product = products.find((p) => p.id === item.product_id);
 						if (!product) return null;
 
 						// Get stock info - handle both current_stock field or default to 0
-						const stockAvailable = (product as any).current_stock || 0;
+						const stockAvailable = product.current_stock || 0;
 						const stockNeeded = item.quantity - stockAvailable;
 						const hasStockWarning = stockNeeded > 0;
 
@@ -156,11 +157,10 @@ export function Step2Products({
 					{filteredProducts.length > 0 ? (
 						filteredProducts.map((product) => {
 							const isSelected = selectedItems.some(
-								(item: any) => item.product_id === product.id,
+								(item) => item.product_id === product.id,
 							);
 
-							// Get stock - handle if field doesn't exist yet
-							const stockAvailable = (product as any).current_stock || 0;
+							const stockAvailable = product.current_stock || 0;
 
 							return (
 								<button

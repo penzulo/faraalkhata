@@ -4,6 +4,7 @@ export interface Product {
 	name: string;
 	unit_of_measure: string;
 	sell_price: number;
+	current_stock: number;
 }
 
 export interface ProductWithCurrentPrice extends Product {

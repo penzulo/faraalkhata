@@ -35,7 +35,6 @@ export function CustomerQuickAdd({
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Validation
 		const newErrors: { name?: string; phone?: string } = {};
 		if (!name.trim()) newErrors.name = "Name is required";
 		if (!phone.trim()) {
@@ -56,12 +55,10 @@ export function CustomerQuickAdd({
 				category_ids: [],
 			});
 
-			// Reset form
 			setName("");
 			setPhone("");
 			setErrors({});
 
-			// Call success callback with new customer ID
 			onSuccess(result.id);
 		} catch (error) {
 			console.error("Failed to create customer:", error);

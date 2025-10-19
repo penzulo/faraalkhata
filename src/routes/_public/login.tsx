@@ -1,8 +1,9 @@
 import { useForm } from "@tanstack/react-form";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Mail, Sparkles, User } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId } from "react";
 import { toast } from "sonner";
+import { useBoolean } from "usehooks-ts";
 import { z } from "zod";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthError, useAuthLoading, useAuthStore } from "@/stores/auth";
 
 const loginSchema = z.object({
 	email: z.string().email("Please enter a valid email address"),
@@ -26,10 +27,7 @@ const loginSchema = z.object({
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
-
-type LoginSearch = {
-	redirect?: string;
-};
+type LoginSearch = { redirect?: string };
 
 export const Route = createFileRoute("/_public/login")({
 	component: LoginPage,
@@ -39,55 +37,52 @@ export const Route = createFileRoute("/_public/login")({
 });
 
 function LoginPage() {
-	const { signInWithLoginLink, loading, error, clearError } = useAuthStore();
+	const loading = useAuthLoading();
+	const error = useAuthError();
 	const { redirect } = Route.useSearch();
-	const [isSubmitted, setIsSubmitted] = useState(false);
-
+	const {
+		value: isSubmitted,
+		setTrue: submitLoginForm,
+		setFalse: discardLoginForm,
+	} = useBoolean();
 	const fullNameId = useId();
 	const emailId = useId();
-
 	const form = useForm({
 		defaultValues: {
 			email: "",
 			full_name: "",
 		} as LoginFormData,
 		onSubmit: async ({ value }) => {
-			try {
-				setIsSubmitted(true);
-
-				const redirectUrl =
-					redirect && redirect !== "/login"
-						? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
-						: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent("/dashboard")}`;
-
-				// Pass full_name in user metadata for Supabase
-				await signInWithLoginLink(value.email, redirectUrl, {
+			const redirectUrl =
+				redirect && redirect !== "/login"
+					? `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirect)}`
+					: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent("/dashboard")}`;
+			const promise = useAuthStore
+				.getState()
+				.signInWithLoginLink(value.email, redirectUrl, {
 					data: {
 						full_name: value.full_name,
 					},
 				});
-
-				toast.success("Login link sent!", {
-					description: "Please check your email and click the link to sign in.",
-				});
-			} catch (error) {
-				console.error("Login error:", error);
-				setIsSubmitted(false);
-				toast.error("Failed to send magic link", {
-					description:
-						"Please try again or contact support if the issue persists.",
-				});
-			}
+			toast.promise(promise, {
+				loading: "Sending login link...",
+				success: () => {
+					submitLoginForm();
+					return "Login link sent! Please check your email.";
+				},
+				error: () => {
+					discardLoginForm();
+					return "Failed to send link. Please try again.";
+				},
+			});
 		},
 	});
-
 	useEffect(() => {
 		if (error) {
-			const timer = setTimeout(clearError, 5000);
+			const timer = setTimeout(useAuthStore.getState().clearError, 5000);
 			return () => clearTimeout(timer);
 		}
-	}, [error, clearError]);
-
+	}, [error]);
 	if (isSubmitted) {
 		return (
 			<div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -102,7 +97,7 @@ function LoginPage() {
 									Check your email
 								</h2>
 								<p className="mt-2 text-muted-foreground">
-									We've sent a magic link to{" "}
+									We've sent a login link to{" "}
 									<strong>{form.state.values.email}</strong>
 								</p>
 							</div>
@@ -112,7 +107,7 @@ function LoginPage() {
 							</div>
 							<Button
 								variant="outline"
-								onClick={() => setIsSubmitted(false)}
+								onClick={discardLoginForm}
 								className="mt-4"
 							>
 								Send another link
@@ -123,7 +118,6 @@ function LoginPage() {
 			</div>
 		);
 	}
-
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-background p-4">
 			<div className="w-full max-w-md space-y-6">
@@ -143,7 +137,6 @@ function LoginPage() {
 						</p>
 					</div>
 				</div>
-
 				{/* Login Card */}
 				<Card>
 					<CardHeader>
@@ -196,7 +189,6 @@ function LoginPage() {
 									</div>
 								)}
 							</form.Field>
-
 							{/* Email Field */}
 							<form.Field
 								name="email"
@@ -231,14 +223,12 @@ function LoginPage() {
 									</div>
 								)}
 							</form.Field>
-
 							{/* Error Alert */}
 							{error && (
 								<Alert variant="destructive">
 									<AlertDescription>{error}</AlertDescription>
 								</Alert>
 							)}
-
 							{/* Submit Button */}
 							<Button
 								type="submit"
@@ -258,7 +248,6 @@ function LoginPage() {
 								)}
 							</Button>
 						</form>
-
 						{/* Help Text */}
 						<div className="mt-4 text-center">
 							<p className="text-muted-foreground text-xs">
@@ -270,7 +259,6 @@ function LoginPage() {
 						</div>
 					</CardContent>
 				</Card>
-
 				{/* Footer */}
 				<div className="text-center text-muted-foreground text-sm">
 					<p>

@@ -9,6 +9,9 @@ import {
 } from "lucide-react";
 import { useId } from "react";
 import { useBoolean } from "usehooks-ts";
+import { Step1Customer } from "@/components/order-form/Step1Customer";
+import { Step2Products } from "@/components/order-form/Step2Products";
+import { Step3Review } from "@/components/order-form/Step3Review";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -22,18 +25,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { useOrderForm } from "@/hooks/useOrderForm";
+import { type UseOrderFormReturn, useOrderForm } from "@/hooks/useOrderForm";
 import { orderUtils } from "@/lib/api/orders";
 import type { OrderWithRelations } from "@/types/order";
-import { Step1Customer } from "./order-form/Step1Customer";
-import { Step2Products } from "./order-form/Step2Products";
-import { Step3Review } from "./order-form/Step3Review";
 
 interface OrderFormProps {
 	isOpen: boolean;
 	onClose: () => void;
 	editOrder?: OrderWithRelations | null;
 }
+
+type OrderFormContentProps = Pick<
+	UseOrderFormReturn,
+	| "form"
+	| "currentStep"
+	| "customers"
+	| "products"
+	| "referralPartners"
+	| "validators"
+	| "orderCalculations"
+	| "addProduct"
+	| "removeProduct"
+	| "updateProductQuantity"
+	| "handleSubmit"
+>;
 
 export function OrderForm({ isOpen, onClose, editOrder }: OrderFormProps) {
 	const {
@@ -334,7 +349,7 @@ function OrderFormContent({
 	removeProduct,
 	updateProductQuantity,
 	handleSubmit,
-}: any) {
+}: OrderFormContentProps) {
 	const formId = useId();
 
 	return (

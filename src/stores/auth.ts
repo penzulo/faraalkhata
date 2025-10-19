@@ -1,8 +1,8 @@
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
-import type { Prettify } from "@/lib/utils";
 import type { MagicLinkOptions, PublicUser } from "@/types/auth";
+import type { Compute } from "@/types/shared";
 
 interface AuthState {
 	user: User | null;
@@ -25,7 +25,7 @@ interface AuthActions {
 	setSession: (session: Session | null) => Promise<void>;
 }
 
-type AuthStore = Prettify<AuthState & AuthActions>;
+type AuthStore = Compute<AuthState & AuthActions>;
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
 	user: null,
@@ -175,10 +175,16 @@ async function fetchPublicUser(userId: string): Promise<PublicUser | null> {
 	}
 }
 
-export const useUser = () => useAuthStore((state) => state.user);
-export const usePublicUser = () => useAuthStore((state) => state.publicUser);
-export const useSession = () => useAuthStore((state) => state.session);
-export const useAuthLoading = () => useAuthStore((state) => state.loading);
-export const useAuthError = () => useAuthStore((state) => state.error);
+export const useUser = () => useAuthStore((s) => s.user);
+export const usePublicUser = () => useAuthStore((s) => s.publicUser);
+export const useSession = () => useAuthStore((s) => s.session);
+export const useAuthLoading = () => useAuthStore((s) => s.loading);
+export const useAuthError = () => useAuthStore((s) => s.error);
 export const useIsAuthenticated = () =>
-	useAuthStore((state) => !!state.user && !!state.session);
+	useAuthStore((s) => !!s.user && !!s.session);
+export const useIsInitialized = () => useAuthStore((s) => s.initialized);
+export const useAuthActions = () =>
+	useAuthStore((s) => ({
+		signInWithLoginLink: s.signInWithLoginLink,
+		clearError: s.clearError,
+	}));

@@ -15,7 +15,6 @@ import type {
 	OrderWithRelations,
 } from "@/types/order";
 
-// Validation schema
 const orderSchema = z.object({
 	customer_id: z.string().min(1, "Please select a customer"),
 	referral_partner_id: z.string().optional(),
@@ -46,16 +45,13 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 	const updateOrder = useUpdateOrder();
 	const isDesktop = useMediaQuery("(min-width: 768px)");
 
-	// Multi-step state
 	const [currentStep, setCurrentStep] = useState(1);
 	const totalSteps = 3;
 
-	// Data loading
 	const { data: customers = [] } = useCustomers();
 	const { data: products = [] } = useProducts();
 	const { data: referralPartners = [] } = useReferralPartners();
 
-	// Form state
 	const formMeta = useMemo(
 		() => ({
 			isEditing: Boolean(editOrder),
@@ -70,7 +66,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		[editOrder, createOrder.isPending, updateOrder.isPending],
 	);
 
-	// Form instance
 	const form = useForm({
 		defaultValues: {
 			customer_id: editOrder?.customer_id || "",
@@ -112,7 +107,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		},
 	});
 
-	// Subscribe to form state changes using useStore
 	const customerId = useStore(form.store, (state) => state.values.customer_id);
 	const items = useStore(form.store, (state) => state.values.items);
 	const discountAmount = useStore(
@@ -124,7 +118,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		(state) => state.values.delivery_fee,
 	);
 
-	// Validators
 	const validators = useMemo(
 		() => ({
 			customer_id: ({ value }: { value: string }) => {
@@ -143,7 +136,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		[],
 	);
 
-	// Calculate order totals - now properly reactive
 	const orderCalculations = useMemo(() => {
 		const subtotal = items.reduce((sum, item) => {
 			const product = products.find((p) => p.id === item.product_id);
@@ -161,7 +153,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		};
 	}, [items, discountAmount, deliveryFee, products]);
 
-	// Can go next - now properly reactive to form changes
 	const canGoNext = useMemo(() => {
 		if (currentStep === 1) {
 			return Boolean(customerId && customerId.trim() !== "");
@@ -174,7 +165,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		return true;
 	}, [currentStep, customerId, items.length]);
 
-	// Step navigation
 	const goToNextStep = useCallback(() => {
 		if (canGoNext && currentStep < totalSteps) {
 			setCurrentStep(currentStep + 1);
@@ -193,7 +183,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		}
 	}, []);
 
-	// Product item management
 	const addProduct = useCallback(
 		(productId: string) => {
 			const currentItems = form.getFieldValue("items") as OrderItemFormData[];
@@ -244,7 +233,6 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		[form],
 	);
 
-	// Event handlers
 	const handleClose = useCallback(() => {
 		form.reset();
 		setCurrentStep(1);
@@ -261,33 +249,26 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 	);
 
 	return {
-		// State
 		form,
 		formMeta,
 		isDesktop,
 		currentStep,
 		totalSteps,
-
-		// Data
 		customers,
 		products,
 		referralPartners,
 		validators,
 		orderCalculations,
-
-		// Navigation
 		canGoNext,
 		goToNextStep,
 		goToPrevStep,
 		goToStep,
-
-		// Product management
 		addProduct,
 		removeProduct,
 		updateProductQuantity,
-
-		// Actions
 		handleClose,
 		handleSubmit,
 	};
 }
+
+export type UseOrderFormReturn = ReturnType<typeof useOrderForm>;

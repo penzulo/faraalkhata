@@ -13,7 +13,6 @@ import type {
 	CustomerWithCategories,
 } from "@/types/customer";
 
-// Enhanced validation schema following your product pattern
 const customerSchema = z.object({
 	name: z.string().min(2, "Customer name must be at least 2 characters"),
 	phone: z
@@ -24,13 +23,12 @@ const customerSchema = z.object({
 	category_ids: z.array(z.string()).default([]),
 });
 
-// Predefined category options
 const CATEGORY_COLORS = [
-	"#FF8C42", // faraal-saffron
-	"#FFB347", // faraal-gold
-	"#B85450", // faraal-terracotta
-	"#464C56", // faraal-dark-gray
-	"#717680", // faraal-medium-gray
+	"#FF8C42",
+	"#FFB347",
+	"#B85450",
+	"#464C56",
+	"#717680",
 ] as const;
 
 interface UseCustomerFormProps {
@@ -47,11 +45,9 @@ export function useCustomerForm({
 	const { data: categories = [] } = useCategories();
 	const isDesktop = useMediaQuery("(min-width: 768px)");
 
-	// Enhanced state management
 	const { value: showCategoryManager, toggle: toggleCategoryManager } =
 		useBoolean(false);
 
-	// Memoized computed values following your pattern
 	const formMeta = useMemo(
 		() => ({
 			isEditing: Boolean(editCustomer),
@@ -66,7 +62,6 @@ export function useCustomerForm({
 		[editCustomer, createCustomer.isPending, updateCustomer.isPending],
 	);
 
-	// Form instance with proper error handling
 	const form = useForm({
 		defaultValues: {
 			name: editCustomer?.name || "",
@@ -98,7 +93,6 @@ export function useCustomerForm({
 		},
 	});
 
-	// Memoized customer insights (similar to your profit analysis)
 	const customerInsights = useMemo(() => {
 		const name = form.state.values.name;
 		const phone = form.state.values.phone;
@@ -113,7 +107,6 @@ export function useCustomerForm({
 		const isPhoneValid = customerUtils.isValidIndianPhone(phone);
 		const formattedPhone = phone ? customerUtils.formatPhoneNumber(phone) : "";
 
-		// Category analysis
 		const selectedCategoryNames = categories
 			.filter((cat) => selectedCategories.includes(cat.id))
 			.map((cat) => cat.name);
@@ -164,7 +157,6 @@ export function useCustomerForm({
 		categories,
 	]);
 
-	// Memoized validators following your exact pattern
 	const validators = useMemo(
 		() => ({
 			name: ({ value }: { value: string }) => {
@@ -185,7 +177,6 @@ export function useCustomerForm({
 				return result.success ? undefined : result.error.errors[0]?.message;
 			},
 			notes: ({ value }: { value: string | undefined }) => {
-				// Optional field, so we just check if it's reasonable length
 				if (!value) return undefined;
 				if (value.length > 500) {
 					return "Notes should be less than 500 characters";
@@ -199,7 +190,6 @@ export function useCustomerForm({
 		[],
 	);
 
-	// Category options with enhanced metadata
 	const categoryOptions = useMemo(() => {
 		return categories.map((category, index) => ({
 			value: category.id,
@@ -208,13 +198,11 @@ export function useCustomerForm({
 		}));
 	}, [categories]);
 
-	// Phone number formatting helper
 	const formatPhoneForDisplay = useCallback((phone: string) => {
 		const cleaned = customerUtils.cleanPhoneNumber(phone);
 		return customerUtils.formatPhoneNumber(cleaned);
 	}, []);
 
-	// Event handlers following your pattern
 	const handleClose = useCallback(() => {
 		form.reset();
 		onClose();
@@ -229,16 +217,12 @@ export function useCustomerForm({
 		[form],
 	);
 
-	// Phone number input handler with auto-formatting
 	const handlePhoneChange = useCallback((value: string) => {
-		// Remove all non-digits
 		const cleaned = value.replace(/\D/g, "");
-		// Limit to 10 digits
 		const limited = cleaned.slice(0, 10);
 		return limited;
 	}, []);
 
-	// Category management helpers
 	const addCategory = useCallback(
 		(categoryId: string) => {
 			const currentIds = form.getFieldValue("category_ids") as string[];
@@ -273,18 +257,13 @@ export function useCustomerForm({
 	);
 
 	return {
-		// State
 		form,
 		formMeta,
 		isDesktop,
 		showCategoryManager,
-
-		// Data
 		customerInsights,
 		validators,
 		categoryOptions,
-
-		// Actions
 		handleClose,
 		handleSubmit,
 		handlePhoneChange,
@@ -293,8 +272,6 @@ export function useCustomerForm({
 		addCategory,
 		removeCategory,
 		toggleCategory,
-
-		// Helper utilities
 		utils: {
 			getInitials: customerUtils.getCustomerInitials,
 			getAvatarColor: customerUtils.getAvatarColor,
@@ -303,3 +280,5 @@ export function useCustomerForm({
 		},
 	};
 }
+
+export type UseCustomerFormReturn = ReturnType<typeof useCustomerForm>;

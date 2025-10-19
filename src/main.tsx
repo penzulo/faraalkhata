@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
-import { routeTree } from "./routeTree.gen";
-import "./styles.css";
+import { routeTree } from "@/routeTree.gen";
+import { useAuthStore } from "@/stores/auth";
+import "@/styles.css";
 
 interface QueryError extends Error {
 	status?: number;
@@ -13,7 +14,6 @@ interface QueryError extends Error {
 	};
 }
 
-// Create a new router instance
 const queryClient = new QueryClient({
 	defaultOptions: {
 		queries: {
@@ -32,7 +32,6 @@ const queryClient = new QueryClient({
 					return false;
 				}
 
-				// Don't retry on 404 (not found) errors
 				if (
 					queryError.status === 404 ||
 					queryError.statusCode === 404 ||
@@ -41,7 +40,6 @@ const queryClient = new QueryClient({
 					return false;
 				}
 
-				// Retry up to 3 times for other errors
 				return failureCount < 3;
 			},
 		},
@@ -59,22 +57,34 @@ const router = createRouter({
 	defaultPreloadStaleTime: 0,
 });
 
-// Register the router instance for type safety
 declare module "@tanstack/react-router" {
 	interface Register {
 		router: typeof router;
 	}
 }
 
-// Render the app
-const rootElement = document.getElementById("app");
-if (rootElement && !rootElement.innerHTML) {
-	const root = ReactDOM.createRoot(rootElement);
-	root.render(
-		<StrictMode>
-			<QueryClientProvider client={queryClient}>
-				<RouterProvider router={router} />
-			</QueryClientProvider>
-		</StrictMode>,
-	);
-}
+const initializeAndRenderApp = async () => {
+	console.log("[main] Initializing authentication");
+
+	try {
+		await useAuthStore.getState().init();
+		console.log("[main] Authentication initialized successfully.");
+	} catch (e) {
+		console.error("[main] Failed to initialize authentication:", e);
+	}
+
+	const rootElement = document.getElementById("app");
+	if (rootElement && !rootElement.innerHTML) {
+		const root = ReactDOM.createRoot(rootElement);
+		root.render(
+			<StrictMode>
+				<QueryClientProvider client={queryClient}>
+					<RouterProvider router={router} />
+				</QueryClientProvider>
+			</StrictMode>,
+		);
+		console.log("[main] Application rendered successfully.");
+	}
+};
+
+initializeAndRenderApp();

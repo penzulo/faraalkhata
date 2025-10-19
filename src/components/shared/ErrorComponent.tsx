@@ -1,5 +1,6 @@
 import {
 	type ErrorComponentProps,
+	isRedirect,
 	Link,
 	useRouter,
 } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { AppLoading } from "@/components/shared/AppLoading";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +21,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export function ErrorComponent({ error }: ErrorComponentProps) {
 	const router = useRouter();
 
-	// Log error to monitoring service (Sentry, LogRocket, etc.)
+	if (isRedirect(error)) return <AppLoading message="Redirecting" />;
+
 	console.error("Route Error:", error);
 
 	const handleRefresh = () => {
@@ -27,18 +30,17 @@ export function ErrorComponent({ error }: ErrorComponentProps) {
 	};
 
 	const handleGoHome = () => {
-		// Reset router error state and navigate
 		router.navigate({ to: "/dashboard" });
 	};
 
 	const handleReportError = () => {
-		// You can integrate with your error reporting service here
 		toast.success("Error reported! Thank you for helping us improve.");
 	};
 
-	// Determine error type for better messaging
 	const getErrorInfo = () => {
-		if (error.message.includes("fetch") || error.message.includes("network")) {
+		const errorMessage = error?.message ?? error?.toString() ?? "Unknown error";
+
+		if (errorMessage.includes("fetch") || errorMessage.includes("network")) {
 			return {
 				title: "Connection Problem",
 				description:
@@ -47,7 +49,7 @@ export function ErrorComponent({ error }: ErrorComponentProps) {
 			};
 		}
 
-		if (error.message.includes("404") || error.message.includes("Not Found")) {
+		if (errorMessage.includes("404") || errorMessage.includes("Not Found")) {
 			return {
 				title: "Page Not Available",
 				description:
@@ -58,8 +60,8 @@ export function ErrorComponent({ error }: ErrorComponentProps) {
 		}
 
 		if (
-			error.message.includes("auth") ||
-			error.message.includes("unauthorized")
+			errorMessage.includes("auth") ||
+			errorMessage.includes("unauthorized")
 		) {
 			return {
 				title: "Authentication Error",
@@ -135,8 +137,10 @@ export function ErrorComponent({ error }: ErrorComponentProps) {
 										Technical Details (Click to expand)
 									</summary>
 									<pre className="max-h-32 overflow-auto whitespace-pre-wrap rounded-md bg-destructive/5 p-3 text-xs">
-										{error.message}
-										{error.stack && `\n\nStack trace:\n${error.stack}`}
+										{error?.message ??
+											error?.toString() ??
+											"No error details available"}
+										{error?.stack && `\n\nStack trace:\n${error.stack}`}
 									</pre>
 								</details>
 							</AlertDescription>
