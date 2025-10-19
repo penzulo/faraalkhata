@@ -8,7 +8,7 @@ export interface Product {
 }
 
 export interface ProductWithCurrentPrice extends Product {
-	current_cost_price: number | null;
+	current_cost_price: number;
 }
 
 export interface ProductFormData {

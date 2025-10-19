@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { productsApi } from "../lib/api/products";
-import type { ProductFormData } from "../types/product";
+import { productsApi } from "@/lib/api/products";
+import type { ProductFormData } from "@/types/product";
 
 export const PRODUCTS_QUERY_KEY = ["products"];
 
