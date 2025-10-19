@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
+import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { routeTree } from "@/routeTree.gen";
 import { useAuthStore } from "@/stores/auth";
 import "@/styles.css";
@@ -79,7 +80,14 @@ const initializeAndRenderApp = async () => {
 		root.render(
 			<StrictMode>
 				<QueryClientProvider client={queryClient}>
-					<RouterProvider router={router} />
+					<ThemeProvider
+						attribute="class"
+						defaultTheme="system"
+						enableSystem
+						disableTransitionOnChange
+					>
+						<RouterProvider router={router} />
+					</ThemeProvider>
 				</QueryClientProvider>
 			</StrictMode>,
 		);
