@@ -4,19 +4,25 @@ import {
 	LayoutDashboard,
 	LogOut,
 	Menu,
+	Moon,
 	Package,
 	Pin,
 	PinOff,
 	Plus,
-	Settings,
 	ShoppingCart,
 	Sparkles,
-	User,
+	Sun,
 	Users,
 } from "lucide-react";
 import type React from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
-import { useBoolean, useLocalStorage, useMediaQuery } from "usehooks-ts";
+import {
+	useBoolean,
+	useDarkMode,
+	useLocalStorage,
+	useMediaQuery,
+} from "usehooks-ts";
 import { Button } from "@/components/ui/button";
 import {
 	DropdownMenu,
@@ -45,6 +51,11 @@ interface NavContentProps {
 	collapsed?: boolean;
 	onToggleCollapse?: () => void;
 }
+
+const darkModeOptions = {
+	localStorageKey: "faraal-theme",
+	defaultValue: false,
+} as const;
 
 const navigationItems = [
 	{
@@ -86,13 +97,16 @@ function DesktopNavContent({
 }: NavContentProps) {
 	const user = useUser();
 	const publicUser = usePublicUser();
-	const signOut = useAuthStore((state) => state.signOut);
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { isDarkMode, toggle } = useDarkMode({
+		localStorageKey: "faraal-theme",
+		defaultValue: false,
+	});
 
 	const handleSignOut = async () => {
 		try {
-			await signOut();
+			await useAuthStore.getState().signOut();
 			toast.success("Signed out successfully.");
 			navigate({ to: "/login" });
 		} catch (error) {
@@ -260,9 +274,18 @@ function DesktopNavContent({
 										</div>
 									</DropdownMenuLabel>
 									<DropdownMenuSeparator />
-									<DropdownMenuItem disabled>
-										<Settings className="mr-2 h-4 w-4" />
-										Settings (Coming Soon)
+									<DropdownMenuItem onClick={toggle}>
+										{isDarkMode ? (
+											<>
+												<Sun className="mr-2 h-4 w-4" />
+												Light Mode
+											</>
+										) : (
+											<>
+												<Moon className="mr-2 h-4 w-4" />
+												Dark Mode
+											</>
+										)}
 									</DropdownMenuItem>
 									<DropdownMenuSeparator />
 									<DropdownMenuItem
@@ -312,13 +335,19 @@ function DesktopNavContent({
 						<DropdownMenuContent align="start" side="top" className="mb-2 w-56">
 							<DropdownMenuLabel>Account</DropdownMenuLabel>
 							<DropdownMenuSeparator />
-							<DropdownMenuItem disabled>
-								<User className="mr-2 h-4 w-4" />
-								Profile (Coming Soon)
-							</DropdownMenuItem>
-							<DropdownMenuItem disabled>
-								<Settings className="mr-2 h-4 w-4" />
-								Settings (Coming Soon)
+
+							<DropdownMenuItem onClick={toggle}>
+								{isDarkMode ? (
+									<>
+										<Sun className="mr-2 h-4 w-4" />
+										Light Mode
+									</>
+								) : (
+									<>
+										<Moon className="mr-2 h-4 w-4" />
+										Dark Mode
+									</>
+								)}
 							</DropdownMenuItem>
 							<DropdownMenuSeparator />
 							<DropdownMenuItem
@@ -342,6 +371,10 @@ function MobileNavContent({ onLinkClick }: NavContentProps) {
 	const signOut = useAuthStore((state) => state.signOut);
 	const navigate = useNavigate();
 	const location = useLocation();
+	const { isDarkMode, toggle } = useDarkMode({
+		localStorageKey: "faraal-theme",
+		defaultValue: false,
+	});
 
 	const handleSignOut = async () => {
 		try {
@@ -418,7 +451,7 @@ function MobileNavContent({ onLinkClick }: NavContentProps) {
 				})}
 			</nav>
 
-			{/* Mobile User Info & Sign Out */}
+			{/* Mobile User Info & Actions */}
 			<div className="border-border border-t p-4">
 				<div className="mb-3 flex items-center gap-3 rounded-lg bg-muted/50 p-3">
 					<div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary">
@@ -435,6 +468,24 @@ function MobileNavContent({ onLinkClick }: NavContentProps) {
 						</p>
 					</div>
 				</div>
+				<Button
+					variant="ghost"
+					size="sm"
+					className="mb-2 w-full justify-start text-muted-foreground hover:bg-muted hover:text-foreground"
+					onClick={toggle}
+				>
+					{isDarkMode ? (
+						<>
+							<Sun className="mr-2 h-4 w-4" />
+							Light Mode
+						</>
+					) : (
+						<>
+							<Moon className="mr-2 h-4 w-4" />
+							Dark Mode
+						</>
+					)}
+				</Button>
 				<Button
 					variant="ghost"
 					size="sm"
@@ -485,7 +536,7 @@ function MobileBottomNavigation() {
 export function AppLayout({ children }: AppLayoutProps) {
 	const {
 		value: sidebarOpen,
-		setValue: setSidebarOpen,
+		setValue: openSidebar,
 		setFalse: closeSidebar,
 	} = useBoolean();
 
@@ -495,6 +546,16 @@ export function AppLayout({ children }: AppLayoutProps) {
 	);
 	const isDesktop = useMediaQuery("(min-width: 768px)");
 	const isMobile = useMediaQuery("(max-width: 767px)");
+
+	const { isDarkMode } = useDarkMode(darkModeOptions);
+
+	useEffect(() => {
+		if (isDarkMode) {
+			document.documentElement.classList.add("dark");
+		} else {
+			document.documentElement.classList.remove("dark");
+		}
+	}, [isDarkMode]);
 
 	const toggleSidebar = () => {
 		setSidebarCollapsed(!sidebarCollapsed);
@@ -546,7 +607,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 									<h1 className="font-semibold text-lg">FaraalKhata</h1>
 								</div>
 
-								<Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+								<Sheet open={sidebarOpen} onOpenChange={openSidebar}>
 									<SheetTrigger asChild>
 										<Button variant="ghost" size="sm">
 											<Menu className="h-5 w-5" />
