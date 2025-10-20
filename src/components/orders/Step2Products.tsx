@@ -215,42 +215,11 @@ export function Step2Products({
 				</p>
 			</header>
 
-			{/* Selected Products Summary */}
-			{selectedItems.length > 0 && (
-				<div className="space-y-3">
-					<h4 className="font-medium text-foreground text-sm">
-						Selected Products ({selectedItems.length})
-					</h4>
-					<ScrollArea className="max-h-[300px]">
-						<div className="space-y-3 pr-4">
-							{selectedItems.map((item) => {
-								const product = products.find((p) => p.id === item.product_id);
-								if (!product) return null;
+			{/* Product Search - Fixed at top */}
+			<div className="space-y-3">
+				<h4 className="font-medium text-foreground text-sm">Search Products</h4>
 
-								return (
-									<SelectedProductCard
-										key={item.product_id}
-										product={product}
-										quantity={item.quantity}
-										onRemove={() => removeProduct(item.product_id)}
-										onQuantityChange={(qty) =>
-											updateProductQuantity(item.product_id, qty)
-										}
-									/>
-								);
-							})}
-						</div>
-					</ScrollArea>
-				</div>
-			)}
-
-			{/* Product Selection - Fixed at top of scroll area */}
-			<div className="flex-1 space-y-3">
-				<h4 className="font-medium text-foreground text-sm">
-					Add More Products
-				</h4>
-
-				{/* Search - Fixed at top */}
+				{/* Search Bar */}
 				<div className="relative">
 					<Search
 						className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 h-4 w-4 text-muted-foreground"
@@ -262,11 +231,25 @@ export function Step2Products({
 						onChange={handleSearchChange}
 						className="pl-10"
 						aria-label="Search products"
+						autoFocus
 					/>
 				</div>
+			</div>
 
-				{/* Available Products - Scrollable */}
-				<ScrollArea className="h-[400px]">
+			{/* Available Products - Scrollable */}
+			<div className="flex-1 space-y-3">
+				<div className="flex items-center justify-between">
+					<h4 className="font-medium text-foreground text-sm">
+						Available Products
+					</h4>
+					{filteredProducts.length !== products.length && (
+						<span className="text-muted-foreground text-xs">
+							{filteredProducts.length} of {products.length} products
+						</span>
+					)}
+				</div>
+
+				<ScrollArea className="h-[250px]">
 					<div className="space-y-2 pr-4">
 						{filteredProducts.length > 0 ? (
 							filteredProducts.map((product) => {
@@ -290,8 +273,35 @@ export function Step2Products({
 				</ScrollArea>
 			</div>
 
-			{/* Validation Error */}
-			{selectedItems.length === 0 && (
+			{/* Selected Products Summary */}
+			{selectedItems.length > 0 ? (
+				<div className="space-y-3">
+					<h4 className="font-medium text-foreground text-sm">
+						Selected Products ({selectedItems.length})
+					</h4>
+					<ScrollArea className="max-h-[350px]">
+						<div className="space-y-3 pr-4">
+							{selectedItems.map((item) => {
+								const product = products.find((p) => p.id === item.product_id);
+								if (!product) return null;
+
+								return (
+									<SelectedProductCard
+										key={item.product_id}
+										product={product}
+										quantity={item.quantity}
+										onRemove={() => removeProduct(item.product_id)}
+										onQuantityChange={(qty) =>
+											updateProductQuantity(item.product_id, qty)
+										}
+									/>
+								);
+							})}
+						</div>
+					</ScrollArea>
+				</div>
+			) : (
+				/* Validation Message when no products selected */
 				<Alert>
 					<AlertCircle className="h-4 w-4" />
 					<AlertDescription>
