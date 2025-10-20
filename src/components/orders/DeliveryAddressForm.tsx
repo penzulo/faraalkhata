@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -46,7 +47,7 @@ export function DeliveryAddressForm({
 	const recipientId = useId();
 	const phoneId = useId();
 
-	const handleSubmit = async (e: React.FormEvent) => {
+	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
 		// Validation
@@ -62,28 +63,42 @@ export function DeliveryAddressForm({
 			return;
 		}
 
-		try {
-			const result = await createAddress.mutateAsync({
+		// Use mutate with callbacks
+		createAddress.mutate(
+			{
 				customerId,
 				addressData: formData,
-			});
+			},
+			{
+				onSuccess: (result) => {
+					// Reset form
+					setFormData({
+						recipient_name: "",
+						phone: "",
+						address_line1: "",
+						address_line2: "",
+						city: "",
+						state: "",
+						zipcode: "",
+					});
+					setErrors({});
 
-			// Reset form
-			setFormData({
-				recipient_name: "",
-				phone: "",
-				address_line1: "",
-				address_line2: "",
-				city: "",
-				state: "",
-				zipcode: "",
-			});
-			setErrors({});
+					toast.success("Delivery address added successfully");
 
-			onSuccess(result.id);
-		} catch (error) {
-			console.error("Failed to create address:", error);
-		}
+					onSuccess(result.id);
+					onClose();
+				},
+				onError: (error) => {
+					console.error("Failed to create address:", error);
+
+					toast.error(
+						error instanceof Error
+							? error.message
+							: "Failed to create address. Please try again.",
+					);
+				},
+			},
+		);
 	};
 
 	return (
@@ -107,6 +122,7 @@ export function DeliveryAddressForm({
 								onChange={(e) =>
 									setFormData({ ...formData, recipient_name: e.target.value })
 								}
+								disabled={createAddress.isPending}
 							/>
 							{errors.recipient_name && (
 								<p className="text-red-500 text-sm">{errors.recipient_name}</p>
@@ -123,6 +139,7 @@ export function DeliveryAddressForm({
 								onChange={(e) =>
 									setFormData({ ...formData, phone: e.target.value })
 								}
+								disabled={createAddress.isPending}
 							/>
 							{errors.phone && (
 								<p className="text-red-500 text-sm">{errors.phone}</p>
@@ -138,6 +155,7 @@ export function DeliveryAddressForm({
 								onChange={(e) =>
 									setFormData({ ...formData, address_line1: e.target.value })
 								}
+								disabled={createAddress.isPending}
 							/>
 							{errors.address_line1 && (
 								<p className="text-red-500 text-sm">{errors.address_line1}</p>
@@ -153,6 +171,7 @@ export function DeliveryAddressForm({
 								onChange={(e) =>
 									setFormData({ ...formData, address_line2: e.target.value })
 								}
+								disabled={createAddress.isPending}
 							/>
 						</div>
 
@@ -166,6 +185,7 @@ export function DeliveryAddressForm({
 									onChange={(e) =>
 										setFormData({ ...formData, city: e.target.value })
 									}
+									disabled={createAddress.isPending}
 								/>
 							</div>
 							<div className="space-y-2">
@@ -176,6 +196,7 @@ export function DeliveryAddressForm({
 									onChange={(e) =>
 										setFormData({ ...formData, state: e.target.value })
 									}
+									disabled={createAddress.isPending}
 								/>
 							</div>
 							<div className="space-y-2">
@@ -186,13 +207,19 @@ export function DeliveryAddressForm({
 									onChange={(e) =>
 										setFormData({ ...formData, zipcode: e.target.value })
 									}
+									disabled={createAddress.isPending}
 								/>
 							</div>
 						</div>
 					</div>
 
 					<DialogFooter>
-						<Button type="button" variant="outline" onClick={onClose}>
+						<Button
+							type="button"
+							variant="outline"
+							onClick={onClose}
+							disabled={createAddress.isPending}
+						>
 							Cancel
 						</Button>
 						<Button type="submit" disabled={createAddress.isPending}>

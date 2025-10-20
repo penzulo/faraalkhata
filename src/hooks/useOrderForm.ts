@@ -15,38 +15,76 @@ import type {
 	OrderWithRelations,
 } from "@/types/order";
 
+const orderItemSchema = z.object({
+	product_id: z.string().min(1, "Product is required"),
+	quantity: z.number().min(0.01, "Quantity must be greater than 0"),
+	supplier_id: z.string().optional(),
+});
+
 const orderSchema = z.object({
 	customer_id: z.string().min(1, "Please select a customer"),
 	referral_partner_id: z.string().optional(),
 	needs_delivery: z.boolean(),
 	delivery_address_id: z.string().optional(),
-	delivery_fee: z.number().min(0),
-	discount_amount: z.number().min(0),
+	delivery_fee: z.number().min(0, "Delivery fee cannot be negative"),
+	discount_amount: z.number().min(0, "Discount cannot be negative"),
 	due_date: z.string().min(1, "Please select a due date"),
-	notes: z.string().optional(),
-	items: z
-		.array(
-			z.object({
-				product_id: z.string(),
-				quantity: z.number().min(0.01, "Quantity must be greater than 0"),
-				supplier_id: z.string().optional(),
-			}),
-		)
-		.min(1, "Please add at least one product"),
+	notes: z
+		.string()
+		.max(1000, "Notes must be less than 1000 characters")
+		.optional(),
+	items: z.array(orderItemSchema).min(1, "Please add at least one product"),
 });
+
+const STEPS = [
+	{ number: 1, title: "Customer", key: "customer" },
+	{ number: 2, title: "Products", key: "products" },
+	{ number: 3, title: "Review", key: "review" },
+] as const;
+
+export type StepNumber = (typeof STEPS)[number]["number"];
+
+interface OrderCalculations {
+	subtotal: number;
+	discount: number;
+	deliveryFee: number;
+	total: number;
+	itemCount: number;
+}
 
 interface UseOrderFormProps {
 	editOrder?: OrderWithRelations | null;
 	onClose: () => void;
 }
 
+const calculateOrderTotals = (
+	items: OrderItemFormData[],
+	products: Array<{ id: string; sell_price: number }>,
+	discountAmount: number,
+	deliveryFee: number,
+): OrderCalculations => {
+	const subtotal = items.reduce((sum, item) => {
+		const product = products.find((p) => p.id === item.product_id);
+		return sum + (product?.sell_price ?? 0) * item.quantity;
+	}, 0);
+
+	const total = Math.max(0, subtotal - discountAmount + deliveryFee);
+
+	return {
+		subtotal,
+		discount: discountAmount,
+		deliveryFee,
+		total,
+		itemCount: items.length,
+	};
+};
+
 export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 	const createOrder = useCreateOrder();
 	const updateOrder = useUpdateOrder();
 	const isDesktop = useMediaQuery("(min-width: 768px)");
 
-	const [currentStep, setCurrentStep] = useState(1);
-	const totalSteps = 3;
+	const [currentStep, setCurrentStep] = useState<StepNumber>(1);
 
 	const { data: customers = [] } = useCustomers();
 	const { data: products = [] } = useProducts();
@@ -80,105 +118,74 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 				editOrder?.order_items.map((item) => ({
 					product_id: item.product_id,
 					quantity: item.quantity,
-					supplier_id: item.supplier_id || "",
-				})) || [],
+					supplier_id: item.supplier_id ?? "",
+				})) ?? [],
 		} as OrderFormData,
 		onSubmit: async ({ value }) => {
-			try {
-				const validatedData = orderSchema.parse(value);
+			const validatedData = orderSchema.parse(value);
 
-				if (formMeta.isEditing && editOrder) {
-					await updateOrder.mutateAsync({
-						id: editOrder.id,
-						data: validatedData,
-					});
-				} else {
-					await createOrder.mutateAsync(validatedData);
-				}
-
-				handleClose();
-			} catch (error) {
-				if (error instanceof z.ZodError) {
-					console.error("Validation error:", error.errors);
-				} else {
-					console.error("Form submission error:", error);
-				}
+			if (formMeta.isEditing && editOrder) {
+				await updateOrder.mutateAsync({
+					id: editOrder.id,
+					data: validatedData,
+				});
+			} else {
+				await createOrder.mutateAsync(validatedData);
 			}
+
+			handleClose();
 		},
 	});
 
-	const customerId = useStore(form.store, (state) => state.values.customer_id);
-	const items = useStore(form.store, (state) => state.values.items);
-	const discountAmount = useStore(
+	const { customerId, items, discountAmount, deliveryFee } = useStore(
 		form.store,
-		(state) => state.values.discount_amount,
-	);
-	const deliveryFee = useStore(
-		form.store,
-		(state) => state.values.delivery_fee,
-	);
-
-	const validators = useMemo(
-		() => ({
-			customer_id: ({ value }: { value: string }) => {
-				if (!value) return "Please select a customer";
-				return undefined;
-			},
-			items: ({ value }: { value: OrderItemFormData[] }) => {
-				if (value.length === 0) return "Please add at least one product";
-				return undefined;
-			},
-			due_date: ({ value }: { value: string }) => {
-				if (!value) return "Please select a due date";
-				return undefined;
-			},
+		(s) => ({
+			customerId: s.values.customer_id,
+			items: s.values.items,
+			discountAmount: s.values.discount_amount,
+			deliveryFee: s.values.delivery_fee,
 		}),
-		[],
 	);
 
-	const orderCalculations = useMemo(() => {
-		const subtotal = items.reduce((sum, item) => {
-			const product = products.find((p) => p.id === item.product_id);
-			return sum + (product?.sell_price || 0) * item.quantity;
-		}, 0);
-
-		const total = subtotal - discountAmount + deliveryFee;
-
-		return {
-			subtotal,
-			discount: discountAmount,
-			deliveryFee,
-			total,
-			itemCount: items.length,
-		};
+	const orderCalculations = useMemo((): OrderCalculations => {
+		if (!products)
+			return {
+				subtotal: 0,
+				discount: 0,
+				deliveryFee: 0,
+				total: 0,
+				itemCount: 0,
+			};
+		return calculateOrderTotals(items, products, discountAmount, deliveryFee);
 	}, [items, discountAmount, deliveryFee, products]);
 
-	const canGoNext = useMemo(() => {
-		if (currentStep === 1) {
-			return Boolean(customerId && customerId.trim() !== "");
+	const canGoNext = useMemo((): boolean => {
+		switch (currentStep) {
+			case 1:
+				return Boolean(customerId && customerId.trim() !== "");
+			case 2:
+				return items.length > 0;
+			case 3:
+				return true;
+			default:
+				return false;
 		}
-
-		if (currentStep === 2) {
-			return items.length > 0;
-		}
-
-		return true;
 	}, [currentStep, customerId, items.length]);
 
 	const goToNextStep = useCallback(() => {
-		if (canGoNext && currentStep < totalSteps) {
-			setCurrentStep(currentStep + 1);
+		if (canGoNext && currentStep < STEPS.length) {
+			setCurrentStep((prev) => Math.min(prev + 1, STEPS.length) as StepNumber);
 		}
 	}, [currentStep, canGoNext]);
 
 	const goToPrevStep = useCallback(() => {
 		if (currentStep > 1) {
-			setCurrentStep(currentStep - 1);
+			setCurrentStep((prev) => Math.max(prev - 1, 1) as StepNumber);
 		}
 	}, [currentStep]);
 
-	const goToStep = useCallback((step: number) => {
-		if (step >= 1 && step <= totalSteps) {
+	const goToStep = useCallback((step: StepNumber) => {
+		if (step >= 1 && step <= STEPS.length) {
 			setCurrentStep(step);
 		}
 	}, []);
@@ -186,19 +193,17 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 	const addProduct = useCallback(
 		(productId: string) => {
 			const currentItems = form.getFieldValue("items") as OrderItemFormData[];
-			const existingItem = currentItems.find(
+			const existingItemIndex = currentItems.findIndex(
 				(item) => item.product_id === productId,
 			);
 
-			if (existingItem) {
-				form.setFieldValue(
-					"items",
-					currentItems.map((item) =>
-						item.product_id === productId
-							? { ...item, quantity: item.quantity + 1 }
-							: item,
-					),
-				);
+			if (existingItemIndex !== -1) {
+				const updatedItems = [...currentItems];
+				updatedItems[existingItemIndex] = {
+					...updatedItems[existingItemIndex],
+					quantity: updatedItems[existingItemIndex].quantity + 1,
+				};
+				form.setFieldValue("items", updatedItems);
 			} else {
 				form.setFieldValue("items", [
 					...currentItems,
@@ -222,6 +227,11 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 
 	const updateProductQuantity = useCallback(
 		(productId: string, quantity: number) => {
+			if (quantity < 0) {
+				removeProduct(productId);
+				return;
+			}
+
 			const currentItems = form.getFieldValue("items") as OrderItemFormData[];
 			form.setFieldValue(
 				"items",
@@ -230,7 +240,7 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 				),
 			);
 		},
-		[form],
+		[form, removeProduct],
 	);
 
 	const handleClose = useCallback(() => {
@@ -253,11 +263,11 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		formMeta,
 		isDesktop,
 		currentStep,
-		totalSteps,
-		customers,
-		products,
-		referralPartners,
-		validators,
+		totalSteps: STEPS.length,
+		steps: STEPS,
+		customers: customers ?? [],
+		products: products ?? [],
+		referralPartners: referralPartners ?? [],
 		orderCalculations,
 		canGoNext,
 		goToNextStep,
@@ -268,7 +278,7 @@ export function useOrderForm({ editOrder, onClose }: UseOrderFormProps) {
 		updateProductQuantity,
 		handleClose,
 		handleSubmit,
-	};
+	} as const;
 }
 
 export type UseOrderFormReturn = ReturnType<typeof useOrderForm>;

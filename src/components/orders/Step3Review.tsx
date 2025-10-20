@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useId, useMemo } from "react";
 import { useBoolean } from "usehooks-ts";
-import { DeliveryAddressForm } from "@/components/order-form/DeliveryAddressForm";
+import { DeliveryAddressForm } from "@/components/orders/DeliveryAddressForm";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -165,19 +165,18 @@ export function Step3Review({
 							{field.state.value && (
 								<div className="space-y-3 pl-6">
 									{/* Address Selection */}
-									{/* Address Selection */}
 									<form.Field name="delivery_address_id">
 										{(addressField) => (
 											<div className="space-y-2">
 												<Label>Delivery Address *</Label>
 												{customerAddresses.length > 0 ? (
 													<Select
-														value={addressField.state.value || "none"} // Changed
+														value={addressField.state.value || "none"}
 														onValueChange={(value) =>
 															addressField.handleChange(
 																value === "none" ? "" : value,
 															)
-														} // Changed
+														}
 													>
 														<SelectTrigger>
 															<SelectValue placeholder="Select delivery address" />

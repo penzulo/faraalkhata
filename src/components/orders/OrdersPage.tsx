@@ -1,8 +1,8 @@
 import { Filter, Plus, Search, ShoppingCart } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useBoolean, useMediaQuery } from "usehooks-ts";
-import { OrderCard } from "@/components/OrderCard";
-import { OrderForm } from "@/components/OrderForm";
+import { OrderCard } from "@/components/orders/OrderCard";
+import { OrderForm } from "@/components/orders/OrderForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,16 +96,6 @@ export function OrdersPage() {
 		closeForm();
 	}, [closeForm]);
 
-	// Status filter options
-	// TODO: Figure out how to use this.
-	// const statusOptions = [
-	// 	{ value: "all", label: "All Orders" },
-	// 	{ value: "pending", label: "Pending" },
-	// 	{ value: "ready_for_pickup", label: "Ready for Pickup" },
-	// 	{ value: "completed", label: "Completed" },
-	// 	{ value: "cancelled", label: "Cancelled" },
-	// ];
-
 	const handleStatusFilterChange = (value: string) => {
 		if (value === "all") {
 			setStatusFilter([
@@ -119,7 +109,6 @@ export function OrdersPage() {
 		}
 	};
 
-	// Loading state
 	if (isLoading) {
 		return (
 			<div className="flex h-64 items-center justify-center">
@@ -131,7 +120,6 @@ export function OrdersPage() {
 		);
 	}
 
-	// Error state
 	if (error) {
 		return (
 			<div className="flex h-64 items-center justify-center">

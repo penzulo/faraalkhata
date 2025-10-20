@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useCreateCustomer } from "@/hooks/useCustomers";
+import { CUSTOMERS_QUERY_KEY, useCreateCustomer } from "@/hooks/useCustomers";
 import { customerUtils } from "@/lib/api/customers";
 
 interface CustomerQuickAddProps {
@@ -28,6 +29,7 @@ export function CustomerQuickAdd({
 	const [phone, setPhone] = useState("");
 	const [errors, setErrors] = useState<{ name?: string; phone?: string }>({});
 
+	const queryClient = useQueryClient();
 	const createCustomer = useCreateCustomer();
 	const nameId = useId();
 	const phoneId = useId();
@@ -54,6 +56,8 @@ export function CustomerQuickAdd({
 				phone: customerUtils.cleanPhoneNumber(phone),
 				category_ids: [],
 			});
+
+			await queryClient.refetchQueries({ queryKey: CUSTOMERS_QUERY_KEY });
 
 			setName("");
 			setPhone("");
