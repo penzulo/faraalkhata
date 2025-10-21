@@ -1,8 +1,14 @@
 import type { AuthChangeEvent, Session, User } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
-import type { MagicLinkOptions, PublicUser } from "@/types/auth";
 import type { Compute } from "@/types/shared";
+
+type MagicLinkOptions = {
+	// biome-ignore lint/suspicious/noExplicitAny: Supabase Metadata Type
+	data?: Record<string, any>;
+};
+
+type PublicUser = { id: string; full_name: string | null };
 
 interface AuthState {
 	user: User | null;
