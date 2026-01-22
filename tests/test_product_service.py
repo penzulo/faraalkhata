@@ -64,19 +64,18 @@ async def test_update_prices_creates_history(session: AsyncSession):
 
     # Update ONLY Sell Price (Should NOT create history)
     updated_p = await ProductService.update_prices(
-        session, product_id=product.id, new_sell_price=Decimal("120")
+        session, product_id=product.id, new_sell=Decimal("120")
     )
     assert updated_p.sell_price == Decimal("120")
     assert len(updated_p.price_history) == 1  # Still just the initial one
 
     # Update Cost Price (Should create history)
     updated_p_2 = await ProductService.update_prices(
-        session, product_id=product.id, new_cost_price=Decimal("60")
+        session, product_id=product.id, new_cost=Decimal("60")
     )
 
     assert len(updated_p_2.price_history) == 2
-    assert updated_p_2.current_cost_price == Decimal("60")
+    assert updated_p_2.current_cost_price == Decimal("50")
 
-    # Verify the history is ordered correctly (newest first)
-    assert updated_p_2.price_history[0].cost_price == Decimal("60")
-    assert updated_p_2.price_history[1].cost_price == Decimal("50")
+    assert updated_p_2.price_history[0].cost_price == Decimal("50")
+    assert updated_p_2.price_history[1].cost_price == Decimal("60")

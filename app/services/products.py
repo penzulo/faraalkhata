@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from decimal import Decimal
 from uuid import UUID
 
@@ -13,16 +14,10 @@ from app.schemas.product import ProductCreate
 
 class ProductService:
     @staticmethod
-    async def find(db: AsyncSession, active_only: bool = True):
-        query = select(Product).options(selectinload(Product.price_history))
-        if active_only:
-            query = query.where(Product.is_active)
-
-        result = await db.execute(query)
-        return result.scalars().all()
-
-    @staticmethod
     async def create(db: AsyncSession, data: ProductCreate) -> Product:
+        """
+        Create a new Product along with it's ProductPriceHistory.
+        """
         new_product = Product(**data.model_dump(exclude={"initial_cost_price"}))
         db.add(new_product)
         await db.flush()
@@ -42,12 +37,41 @@ class ProductService:
         return result.scalar_one()
 
     @staticmethod
+    async def find(db: AsyncSession, active_only: bool = True) -> Sequence[Product]:
+        """
+        Query all the products, active or inactive, from the database.
+        """
+        query = select(Product).options(selectinload(Product.price_history))
+        if active_only:
+            query = query.where(Product.is_active)
+
+        result = await db.execute(query)
+        return result.scalars().all()
+
+    @staticmethod
+    async def find_by_id(db: AsyncSession, product_id: UUID) -> Product | None:
+        """
+        Find a Product in the database using it's id.
+        """
+        query = (
+            select(Product)
+            .where(Product.id == product_id)
+            .options(selectinload(Product.price_history))
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
     async def update_prices(
         db: AsyncSession,
         product_id: UUID,
-        new_sell_price: Decimal | None = None,
-        new_cost_price: Decimal | None = None,
+        new_sell: Decimal | None = None,
+        new_cost: Decimal | None = None,
     ):
+        """
+        Update the cost price, sell price or both prices of a Product
+        ensuring ProductPriceHistory gets updated accordingly, if need be.
+        """
         query = (
             select(Product)
             .where(Product.id == product_id)
@@ -59,17 +83,50 @@ class ProductService:
         if not product:
             raise NoResultFound(f"Product of id: {product_id} not found.")
 
-        if new_sell_price is not None:
-            product.sell_price = new_sell_price
+        if new_sell is not None:
+            product.sell_price = new_sell
 
-        if new_cost_price is not None:
+        if new_cost is not None:
             current_cost = product.current_cost_price
 
-            if new_cost_price != current_cost:
+            if new_cost != current_cost:
                 new_history = ProductPriceHistory(
-                    product_id=product.id, cost_price=new_cost_price
+                    product_id=product.id, cost_price=new_cost
                 )
                 db.add(new_history)
 
         await db.flush()
+        await db.refresh(product)
+
+        result = await db.execute(query)
+        return result.scalar_one()
+
+    @staticmethod
+    async def archive(db: AsyncSession, product_id: UUID) -> Product:
+        """
+        Mark a product as not active in the database to prevent future use.
+        """
+        product = await db.get(Product, product_id)
+        if not product:
+            raise NoResultFound(f"Product of id: {product_id} not found.")
+
+        product.is_active = False
+        db.add(product)
+        await db.flush()
+        await db.refresh(product)
         return product
+
+    @staticmethod
+    async def delete(db: AsyncSession, product_id: UUID) -> None:
+        """
+        Hard-delete a product from the database only if it is not linked to
+        any orders.
+        """
+        # WARN: Only allow a hard delete when no Orders are linked.
+        # TODO: Add logic for checking links with Orders
+        product = await db.get(Product, product_id)
+        if not product:
+            raise NoResultFound(f"Product of id: {product_id} not found.")
+
+        await db.delete(product)
+        await db.flush()
