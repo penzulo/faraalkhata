@@ -3,8 +3,8 @@ from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import UnitOfMeasure
-from app.schemas.product import ProductCreate
-from app.services.products import ProductService
+from app.schemas import ProductCreate
+from app.services import ProductService
 
 
 async def test_create_product(session: AsyncSession) -> None:
