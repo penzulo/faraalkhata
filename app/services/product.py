@@ -52,8 +52,10 @@ class ProductService:
     @staticmethod
     async def get_low_stock(db: AsyncSession, threshold: int = 10) -> Sequence[Product]:
         """
-        Returns active products with stock at or below the threshold.
-        Used for Dashboard alerts.
+        Retrieve active products with stock at of below the given threshold.
+
+        Results are ordered by lowest stock first.
+        Intended for inventory alerts and dashboard indicators.
         """
         query = (
             select(Product)

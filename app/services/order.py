@@ -88,8 +88,10 @@ class OrderService:
     @staticmethod
     async def get_stats(db: AsyncSession) -> dict[str, int]:
         """
-        Returns order counts grouped by status.
-        Example: {'pending': 12, 'ready_for_pickup': 5}
+        Return order counts grouped by status.
+
+        Keys are status values, values are total order counts.
+        Intended for dashboard and reporting use.
         """
         query = select(Order.status, func.count(Order.id).label("total")).group_by(
             Order.status

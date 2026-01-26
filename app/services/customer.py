@@ -175,11 +175,11 @@ class CategoryService:
         """
         query = (
             select(
-                Category.name, func.count(CustomerCategory.customer_id).label("count")
+                Category.name, func.count(CustomerCategory.customer_id).label("total")
             )
             .outerjoin(CustomerCategory, Category.id == CustomerCategory.category_id)
             .group_by(Category.name)
             .order_by(Category.name)
         )
         result = await db.execute(query)
-        return {row.name: row.count for row in result.scalars().all()}
+        return {row.name: row.total for row in result.all()}
