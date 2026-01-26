@@ -103,7 +103,7 @@ class OrderItem(Base):
     id: Mapped[UUID] = mapped_column(
         Uuid(as_uuid=True), primary_key=True, default=uuid4
     )
-    order_id: Mapped[UUID] = mapped_column(ForeignKey("orders.id"), ondelete="CASCADE")
+    order_id: Mapped[UUID] = mapped_column(ForeignKey("orders.id", ondelete="CASCADE"))
     product_id: Mapped[UUID] = mapped_column(ForeignKey("products.id"))
 
     quantity: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)

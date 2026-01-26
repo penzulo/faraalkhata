@@ -1,22 +1,26 @@
 from datetime import date, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.db.models import OrderStatus, PaymentMethod
-from app.schemas import ProductResponse
-from app.schemas.customer import CustomerResponse
+from app.schemas import CustomerResponse
+
+if TYPE_CHECKING:
+    from app.schemas import ProductResponse
 
 
+# NOTE: Fixed a typo
 class OrderItemCreate(BaseModel):
     product_id: UUID
-    quanity: Decimal = Field(gt=Decimal(0))
+    quantity: Decimal = Field(gt=Decimal(0))
 
 
 class OrderItemResponse(BaseModel):
     id: UUID
-    product: ProductResponse
+    product: "ProductResponse"
     quantity: Decimal
     price_at_time: Decimal
     total: Decimal

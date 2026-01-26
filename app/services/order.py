@@ -7,7 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.db.models import Order, OrderCancellation, OrderItem, OrderPayment, OrderStatus
 from app.schemas import CancellationCreate, OrderCreate, PaymentCreate
-from app.services import ProductService
+from app.services.product import ProductService  # NOTE: Imported explicitly
 
 
 class OrderService:
@@ -36,7 +36,7 @@ class OrderService:
         """
         new_order = Order(
             customer_id=data.customer_id,
-            elivery_address_id=data.delivery_address_id,
+            delivery_address_id=data.delivery_address_id,
             due_date=data.due_date,
             notes=data.notes,
             discount_amount=data.discount_amount,
@@ -56,14 +56,14 @@ class OrderService:
             line_item = OrderItem(
                 order_id=new_order.id,
                 product_id=product.id,
-                quantity=item_data.quanity,
+                quantity=item_data.quantity,
                 price_at_time=product.sell_price,
                 cost_price_at_time=product.current_cost_price,
             )
             db.add(line_item)
 
-            subtotal += product.sell_price * item_data.quanity
-            await ProductService.adjust_stock(db, product.id, -item_data.quanity)
+            subtotal += product.sell_price * item_data.quantity
+            await ProductService.adjust_stock(db, product.id, -item_data.quantity)
 
         new_order.total_amount = subtotal - data.discount_amount + data.delivery_fee
 
