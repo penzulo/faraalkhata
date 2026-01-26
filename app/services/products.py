@@ -130,3 +130,38 @@ class ProductService:
 
         await db.delete(product)
         await db.flush()
+
+    @staticmethod
+    async def adjust_stock(
+        db: AsyncSession,
+        product_id: UUID,
+        quantity_delta: Decimal,
+        allow_negative: bool = True,
+    ) -> Product:
+        """
+        Safely adjusts stock by locking the database row.
+
+        Args:
+            quantity_delta: Positive to add stock, Negative to remove stock.
+            allow_negative: If False, raises error if stock drops below 0.
+        """
+        query = select(Product).where(Product.id == product_id).with_for_update()
+        product = (await db.execute(query)).scalar_one_or_none()
+
+        if not product:
+            raise ValueError(f"Product {product_id} not found.")
+
+        new_stock = product.current_stock + quantity_delta
+
+        if not allow_negative and new_stock < 0:
+            raise ValueError(
+                f"Insufficient stock for {product.name}. "
+                + f"Current: {product.current_stock}, Requested: {abs(quantity_delta)}"
+            )
+
+        product.current_stock = new_stock
+
+        db.add(product)
+        await db.flush()
+        await db.refresh(product)
+        return product
