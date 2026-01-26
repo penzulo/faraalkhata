@@ -134,3 +134,66 @@ async def test_create_order_multiple_items(session: AsyncSession):
 
     assert p1_new is not None and p1_new.current_stock == Decimal("48")
     assert p2_new is not None and p2_new.current_stock == Decimal("49")
+
+
+async def test_find_orders_filtering(session: AsyncSession):
+    p = await ProductService.create(
+        session,
+        ProductCreate(
+            name="Test Item", sell_price=Decimal("10"), current_stock=Decimal("100")
+        ),
+    )
+
+    c1 = await CustomerService.create(
+        session, CustomerCreate(name="Amitabh", phone="7777777778")
+    )
+    c2 = await CustomerService.create(
+        session, CustomerCreate(name="Rekha", phone="9999995554")
+    )
+
+    o1 = await OrderService.create(
+        session,
+        OrderCreate(
+            customer_id=c1.id,
+            due_date=date.today(),
+            items=[OrderItemCreate(product_id=p.id, quantity=Decimal("1"))],
+        ),
+    )
+
+    o2 = await OrderService.create(
+        session,
+        OrderCreate(
+            customer_id=c2.id,
+            due_date=date.today(),
+            items=[OrderItemCreate(product_id=p.id, quantity=Decimal("1"))],
+        ),
+    )
+
+    o3 = await OrderService.create(
+        session,
+        OrderCreate(
+            customer_id=c1.id,
+            due_date=date.today(),
+            items=[OrderItemCreate(product_id=p.id, quantity=Decimal("1"))],
+        ),
+    )
+
+    # Manually hack status for testing.
+    o3.status = OrderStatus.COMPLETED
+    session.add(o3)
+    await session.flush()
+
+    pending_orders = await OrderService.find(session, status=OrderStatus.PENDING)
+    assert len(pending_orders) == 2
+    ids = [o.id for o in pending_orders]
+    assert o1.id in ids
+    assert o2.id in ids
+    assert o3.id not in ids
+
+    rekha_orders = await OrderService.find(session, search_query="Rekha")
+    assert len(rekha_orders) == 1
+    assert rekha_orders[0].customer.name == "Rekha"
+
+    stats = await OrderService.get_stats(session)
+    assert stats[OrderStatus.PENDING.value] == 2
+    assert stats[OrderStatus.COMPLETED.value] == 1

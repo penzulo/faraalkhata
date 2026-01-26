@@ -41,10 +41,11 @@ class CustomerService:
                 or_(Customer.name.ilike(search_term), Customer.phone.ilike(search_term))
             )
 
-        if sort_by == "created_at":
-            stmt = stmt.order_by(Customer.created_at.desc())
-        else:
-            stmt = stmt.order_by(Customer.name.asc())
+        stmt = stmt.order_by(
+            Customer.created_at.desc()
+            if sort_by == "created_at"
+            else Customer.created_at.asc()
+        )
 
         result = await db.execute(stmt)
         return result.scalars().all()
@@ -101,10 +102,8 @@ class CustomerService:
 
         if data.name:
             customer.name = data.name
-
         if data.phone:
             customer.phone = data.phone
-
         if data.notes is not None:
             customer.notes = data.notes
 

@@ -12,7 +12,6 @@ if TYPE_CHECKING:
     from app.schemas import ProductResponse
 
 
-# NOTE: Fixed a typo
 class OrderItemCreate(BaseModel):
     product_id: UUID
     quantity: Decimal = Field(gt=Decimal(0))

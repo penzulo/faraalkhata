@@ -13,10 +13,64 @@ from app.schemas.product import ProductCreate
 
 
 class ProductService:
+    """
+    Service layer for Product domain layer.
+
+    Handles product lifecycle management, pricing updates with history tracking,
+    stock adjustments, and retrieval operations.
+    """
+
+    @staticmethod
+    async def find(db: AsyncSession, active_only: bool = True) -> Sequence[Product]:
+        """
+        Retrieve all products, optionall filtering only active ones.
+
+        Price history is eagerly loaded.
+        """
+        query = select(Product).options(selectinload(Product.price_history))
+        if active_only:
+            query = query.where(Product.is_active)
+
+        result = await db.execute(query)
+        return result.scalars().all()
+
+    @staticmethod
+    async def find_by_id(db: AsyncSession, product_id: UUID) -> Product | None:
+        """
+        Fetch a product by ID with its price history loaded.
+
+        Returns `None` if the product does not exist.
+        """
+        query = (
+            select(Product)
+            .where(Product.id == product_id)
+            .options(selectinload(Product.price_history))
+        )
+        result = await db.execute(query)
+        return result.scalar_one_or_none()
+
+    @staticmethod
+    async def get_low_stock(db: AsyncSession, threshold: int = 10) -> Sequence[Product]:
+        """
+        Returns active products with stock at or below the threshold.
+        Used for Dashboard alerts.
+        """
+        query = (
+            select(Product)
+            .where(Product.is_active == True)  # noqa: E712
+            .where(Product.current_stock <= threshold)
+            .order_by(Product.current_stock.asc())
+        )
+        result = await db.execute(query)
+        return result.scalars().all()
+
     @staticmethod
     async def create(db: AsyncSession, data: ProductCreate) -> Product:
         """
-        Create a new Product along with it's ProductPriceHistory.
+        Create a new product and initialize its price history.
+
+        Persists the product and records the initial cost price
+        in `ProductPriceHistory`.
         """
         new_product = Product(**data.model_dump(exclude={"initial_cost_price"}))
         db.add(new_product)
@@ -37,31 +91,6 @@ class ProductService:
         return result.scalar_one()
 
     @staticmethod
-    async def find(db: AsyncSession, active_only: bool = True) -> Sequence[Product]:
-        """
-        Query all the products, active or inactive, from the database.
-        """
-        query = select(Product).options(selectinload(Product.price_history))
-        if active_only:
-            query = query.where(Product.is_active)
-
-        result = await db.execute(query)
-        return result.scalars().all()
-
-    @staticmethod
-    async def find_by_id(db: AsyncSession, product_id: UUID) -> Product | None:
-        """
-        Find a Product in the database using it's id.
-        """
-        query = (
-            select(Product)
-            .where(Product.id == product_id)
-            .options(selectinload(Product.price_history))
-        )
-        result = await db.execute(query)
-        return result.scalar_one_or_none()
-
-    @staticmethod
     async def update_prices(
         db: AsyncSession,
         product_id: UUID,
@@ -69,8 +98,10 @@ class ProductService:
         new_cost: Decimal | None = None,
     ):
         """
-        Update the cost price, sell price or both prices of a Product
-        ensuring ProductPriceHistory gets updated accordingly, if need be.
+        Update product pricing and append to cost price history if changed.
+
+        Raises:
+            `NoResultFound`: If the product does not exist.
         """
         query = (
             select(Product)
@@ -104,7 +135,9 @@ class ProductService:
     @staticmethod
     async def archive(db: AsyncSession, product_id: UUID) -> Product:
         """
-        Mark a product as not active in the database to prevent future use.
+        Archive a product by marking it inactive.
+
+        Archived products are excluded from future use.
         """
         product = await db.get(Product, product_id)
         if not product:
@@ -119,8 +152,10 @@ class ProductService:
     @staticmethod
     async def delete(db: AsyncSession, product_id: UUID) -> None:
         """
-        Hard-delete a product from the database only if it is not linked to
-        any orders.
+        Hard-delete a product if it is not linked to any orders.
+
+        Raises:
+            `NoResultFound`: If the product does not exist.
         """
         # WARN: Only allow a hard delete when no Orders are linked.
         # TODO: Add logic for checking links with Orders
@@ -139,11 +174,14 @@ class ProductService:
         allow_negative: bool = True,
     ) -> Product:
         """
-        Safely adjusts stock by locking the database row.
+        Adjust product stock safely using row-level locking.
 
         Args:
-            quantity_delta: Positive to add stock, Negative to remove stock.
-            allow_negative: If False, raises error if stock drops below 0.
+            `quantity_delta`: Positive to add stock, negative to deduct stock.
+            `allow_negative`: If `False`, prevents stock from dropping below 0.
+
+        Raises:
+            `ValueError`: If the product does not exist or stock is insufficient.
         """
         query = select(Product).where(Product.id == product_id).with_for_update()
         product = (await db.execute(query)).scalar_one_or_none()
