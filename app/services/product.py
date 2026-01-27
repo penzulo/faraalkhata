@@ -1,3 +1,4 @@
+import warnings
 from collections.abc import Sequence
 from decimal import Decimal
 from uuid import UUID
@@ -158,12 +159,21 @@ class ProductService:
 
         Raises:
             `NoResultFound`: If the product does not exist.
+            `NotImplementedError`: Hard delete safety check.
         """
-        # WARN: Only allow a hard delete when no Orders are linked.
-        # TODO: Add logic for checking links with Orders
+        warnings.warn(
+            "Hard delete without order check is unsafe.",
+            category=UserWarning,
+            stacklevel=2,
+        )
         product = await db.get(Product, product_id)
         if not product:
             raise NoResultFound(f"Product of id: {product_id} not found.")
+
+        raise NotImplementedError(
+            "Hard delete safety check missing. "
+            + "Must verify product is not linked to orders."
+        )
 
         await db.delete(product)
         await db.flush()

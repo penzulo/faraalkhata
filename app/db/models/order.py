@@ -1,6 +1,8 @@
+import warnings
 from datetime import date, datetime
 from decimal import Decimal
 from enum import StrEnum
+from typing import NoReturn, Self
 from uuid import UUID, uuid4
 
 from sqlalchemy import Date, DateTime, ForeignKey, Numeric, String, Text, Uuid, func
@@ -60,10 +62,6 @@ class Order(Base):
     delivery_address_id: Mapped[UUID | None] = mapped_column(
         ForeignKey("delivery_addresses.id"), nullable=True
     )
-    # TODO: This feature shall be implemented in the next version.
-    referral_partner_id: Mapped[UUID | None] = mapped_column(
-        Uuid(as_uuid=True), nullable=True
-    )
     status: Mapped[OrderStatus] = mapped_column(
         SQLEnum(OrderStatus, native_enum=False),
         default=OrderStatus.PENDING,
@@ -95,6 +93,21 @@ class Order(Base):
         "OrderCancellation", uselist=False, back_populates="order", lazy="selectin"
     )
     delivery_address = relationship("DeliveryAddress", lazy="selectin")
+
+    # NOTE: referral partner support is intentionally incomplete.
+    _referral_partner_id: Mapped[UUID | None] = mapped_column(
+        Uuid(as_uuid=True), nullable=True
+    )
+
+    def _validate_referral_partner(self: Self) -> NoReturn:
+        raise NotImplementedError("Referral partner logic not implemented yet.")
+
+    def referral_partner_id(self: Self) -> UUID | None:
+        warnings.warn(
+            "referral_partner_id is not fully supported yet.",
+            category=UserWarning,
+            stacklevel=2,
+        )
 
 
 class OrderItem(Base):
