@@ -36,7 +36,7 @@ class CustomerService:
             stmt = stmt.where(Customer.is_archived == False)  # noqa: E712
 
         if query:
-            search_term = f"{query}"
+            search_term = f"%{query}%"
             stmt = stmt.where(
                 or_(Customer.name.ilike(search_term), Customer.phone.ilike(search_term))
             )
