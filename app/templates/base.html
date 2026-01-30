@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Faraal Khata</title>
+
+        <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.8/dist/htmx.min.js"></script>
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+        <style>
+            /* Custom scrollbar for a cleaner look */
+            ::-webkit-scrollbar {
+                width: 8px;
+            }
+            ::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #c1c1c1;
+                border-radius: 4px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #a8a8a8;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+        <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex">
+                        <div class="flex-shrink-0 flex items-center">
+                            <span class="text-2xl font-bold text-orange-600">🥨 Faraal Khata</span>
+                        </div>
+                        <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                            <a
+                                href="/"
+                                class="border-orange-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            >
+                                Dashboard
+                            </a>
+                            <a
+                                href="/orders"
+                                class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            >
+                                Orders
+                            </a>
+                            <a
+                                href="/products"
+                                class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                            >
+                                Products
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            {% block content %}
+            <div class="bg-white p-10 rounded-lg shadow text-center">
+                <h1 class="text-xl text-gray-400">Content Placeholder</h1>
+            </div>
+            {% endblock %}
+        </main>
+
+        <section
+            class="bg-gray-900 text-green-400 p-6 font-mono text-xs overflow-x-auto border-t-4 border-orange-500 mt-auto"
+        >
+            <h3 class="text-white font-bold text-lg mb-4 border-b border-gray-700 pb-2">🐍 Request Context Debugger</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                    <h4 class="text-gray-400 mb-2 uppercase tracking-wider">Basic Info</h4>
+                    <div class="mb-1"><span class="text-purple-400">Method:</span> {{ request.method }}</div>
+                    <div class="mb-1"><span class="text-purple-400">URL:</span> {{ request.url }}</div>
+                    <div class="mb-1"><span class="text-purple-400">Client IP:</span> {{ request.client.host }}</div>
+                    <div class="mb-1"><span class="text-purple-400">Path Params:</span> {{ request.path_params }}</div>
+                </div>
+
+                <div>
+                    <h4 class="text-gray-400 mb-2 uppercase tracking-wider">Headers</h4>
+                    <div class="h-48 overflow-y-auto pr-2">
+                        <table class="w-full text-left">
+                            {% for key, value in request.headers.items() %}
+                            <tr class="border-b border-gray-800 hover:bg-gray-800">
+                                <td class="py-1 text-blue-300">{{ key }}</td>
+                                <td class="py-1 pl-4 text-gray-300 break-all">{{ value }}</td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </body>
+</html>
