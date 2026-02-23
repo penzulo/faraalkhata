@@ -177,3 +177,6 @@ pyrightconfig.json
 
 # Sqlite database
 *.db
+
+# Common
+.vscode
