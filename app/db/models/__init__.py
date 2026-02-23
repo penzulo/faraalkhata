@@ -1,5 +1,5 @@
-from .customer import Category, Customer, CustomerCategory
-from .order import (
+from app.db.models.customer import Category, Customer, CustomerCategory
+from app.db.models.order import (
     DeliveryAddress,
     Order,
     OrderCancellation,
@@ -8,8 +8,8 @@ from .order import (
     OrderStatus,
     PaymentMethod,
 )
-from .product import Product, ProductPriceHistory, UnitOfMeasure
-from .user import User
+from app.db.models.product import Product, ProductPriceHistory, UnitOfMeasure
+from app.db.models.user import User
 
 __all__ = [
     "Category",

@@ -1,5 +1,5 @@
-from .customer import CustomerCreate, CustomerResponse, CustomerUpdate
-from .order import (
+from app.schemas.customer import CustomerCreate, CustomerResponse, CustomerUpdate
+from app.schemas.order import (
     CancellationCreate,
     OrderCreate,
     OrderItemCreate,
@@ -8,7 +8,7 @@ from .order import (
     OrderUpdate,
     PaymentCreate,
 )
-from .product import (
+from app.schemas.product import (
     ProductCreate,
     ProductPriceUpdate,
     ProductResponse,
